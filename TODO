@@ -1,0 +1,1 @@
+- move is_local to tools to use it both from Auth and Data

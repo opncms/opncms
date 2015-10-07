@@ -1,0 +1,7 @@
+libboost-system-dev
+libboost-thread-dev
+libboost-filesystem-dev
+cppdb
+mongodb
+gettext
+scons

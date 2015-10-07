@@ -1,0 +1,213 @@
+<% c++ #include "admin.h" %>
+<% xhtml %>
+<% skin %>
+<% view admin uses content::admin extends base %>
+
+<% template css_head() %>
+<% include base::css_head() %>
+<link rel="stylesheet" href="<%= media %>/css/admin.css" type="text/css">
+<link rel="stylesheet" href="<%= media %>/css/login.css" type="text/css">
+<% end template %>
+
+<% template js_head() %>
+<% include base::js_head() %>
+<script src="<%= media %>/js/admin.js" type="text/javascript"></script>
+<% end template %>
+
+<% template js_foot() %>
+<% include base::js_foot() %>
+<script type="text/javascript"><!--
+$('#form input').keydown(function(e) {
+        if (e.keyCode == 13) {
+                $('#form').submit();
+        }
+});
+//--></script> 
+<script src="//tinymce.cachefly.net/4.2/tinymce.min.js"></script>
+<% end template %>
+
+<% template title() %><%= name %><% end template %>
+
+<% template plugin_content() %>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-6 col-md-4 col-md-offset-4">
+            <h1 class="text-center login-title">Sign in to continue</h1>
+            <div class="account-wall">
+                <img class="profile-img" src="" alt="">
+                <form class="form-signin">
+                <input type="text" class="form-control" placeholder="Email" required autofocus>
+                <input type="password" class="form-control" placeholder="Password" required>
+                <button class="btn btn-lg btn-primary btn-block" type="submit">
+                    Sign in</button>
+                <label class="checkbox pull-left">
+                    <input type="checkbox" value="remember-me">
+                    Remember me
+                </label>
+                <a href="#" class="pull-right need-help">Need help? </a><span class="clearfix"></span>
+                </form>
+            </div>
+            <a href="/u/signup" class="text-center new-account">Create an account </a>
+        </div>
+    </div>
+</div>
+<% end template %>
+
+<% template render() %>
+        <% include base::header() %><% include base::body() %>
+<% end template %>
+
+<% end view %>
+
+<!-- ======================== ADMIN_CONFIG =========================== -->
+
+<% view admin_config uses content::admin_config extends base %>
+
+<% template plugin_content() %>
+<div class="container">
+	<div><h3>System Config</h3></div>
+	<table id="admin-config" class="table table-bordered table-striped">
+		<tbody>
+		<tr>
+		<% foreach data in config %>
+		<% item %>
+		<td><%= data.first %></td><td><%= data.second %></td>
+		<% end %>
+		<% empty%>
+			File is empty or not found
+		<% end %>
+		</tr>
+		</tbody>
+	</table>
+	
+<!--
+<div class="col-xs-4">
+	<button type="button" class="btn btn-default addButton"><i class="fa fa-plus"></i></button>
+</div>
+-->
+<button class="btn btn-default">Save</button>
+
+</div>
+
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Modal Header</h4>
+      </div>
+      <div class="modal-body">
+        <p></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<% end template %>
+
+
+<% template js_foot() %>
+<% include base::js_foot() %>
+<script type="text/javascript"><!--
+$('#form input').keydown(function(e) {
+        if (e.keyCode == 13) {
+                $('#form').submit();
+        }
+});
+
+<script type="text/javascript"><!--
+$( document ).ready(function() {
+	$.fn.editableTableWidget=function(e){"use strict";return $(this).each(function(){var t,i=function(){var e=$.extend({},$.fn.editableTableWidget.defaultOptions);return e.editor=e.editor.clone(),e},n=$.extend(i(),e),o=37,r=38,s=39,h=40,a=13,c=27,l=9,d=$(this),f=n.editor.css("position","absolute").hide().appendTo(d.parent()),u=function(e){t=d.find("td:focus"),t.length&&(f.val(t.text()).removeClass("error").show().offset(t.offset()).css(t.css(n.cloneProperties)).width(t.width()).height(t.height()).focus(),e&&f.select())},p=function(){var e,i=f.val(),n=$.Event("change");return t.text()===i||f.hasClass("error")?!0:(e=t.html(),t.text(i).trigger(n,i),void(n.result===!1&&t.html(e)))},v=function(e,t){return t===s?e.next("td"):t===o?e.prev("td"):t===r?e.parent().prev().children().eq(e.index()):t===h?e.parent().next().children().eq(e.index()):[]};f.blur(function(){p(),f.hide()}).keydown(function(e){if(e.which===a)p(),f.hide(),t.focus(),e.preventDefault(),e.stopPropagation();else if(e.which===c)f.val(t.text()),e.preventDefault(),e.stopPropagation(),f.hide(),t.focus();else if(e.which===l)t.focus();else if(this.selectionEnd-this.selectionStart===this.value.length){var i=v(t,e.which);i.length>0&&(i.focus(),e.preventDefault(),e.stopPropagation())}}).on("input paste",function(){var e=$.Event("validate");t.trigger(e,f.val()),e.result===!1?f.addClass("error"):f.removeClass("error")}),d.on("click keypress dblclick",u).css("cursor","pointer").keydown(function(e){var t=!0,i=v($(e.target),e.which);i.length>0?i.focus():e.which===a?u(!1):17===e.which||91===e.which||93===e.which?(u(!0),t=!1):t=!1,t&&(e.stopPropagation(),e.preventDefault())}),d.find("td").prop("tabindex",1),$(window).on("resize",function(){f.is(":visible")&&f.offset(t.offset()).width(t.width()).height(t.height())})})};
+	$.fn.editableTableWidget.defaultOptions = {
+		cloneProperties: ['padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+						'text-align', 'font', 'font-size', 'font-family', 'font-weight',
+						'border', 'border-top', 'border-bottom', 'border-left', 'border-right'],
+		editor: $('<input>')
+	};
+	$('#admin-config').editableTableWidget();
+--></script> 
+<% end template %>
+
+<% end view %>
+
+<!-- ======================== ADMIN_PAGES =========================== -->
+
+<% view admin_pages uses content::admin_pages extends base %>
+
+<% template plugin_content() %>
+<div><h1>Pages</h1></div>
+<div>
+<ol class="sortable">
+    <li><div>Some content</div></li>
+    <li>
+        <div>Some content</div>
+        <ol>
+            <li><div>Some sub-item content</div></li>
+            <li><div>Some sub-item content</div></li>
+        </ol>
+    </li>
+    <li><div>Some content</div></li>
+</ol>
+</div>
+<% end template %>
+
+<% template render() %>
+        <% include base::header() %><% include base::body() %>
+<% end template %>
+
+<% template css_head() %>
+<% include base::css_head() %>
+<link rel="stylesheet" href="<%= media %>/css/jquery-ui.min.css" type="text/css">
+<% end template %>
+
+<% template js_head() %>
+<% include base::js_head() %>
+<script src="<%= media %>/js/jquery-ui.min.js" type="text/javascript"></script>
+<script src="<%= media %>/js/nestedsortable.js" type="text/javascript"></script>
+<% end template %>
+
+<% template js_foot() %>
+<% include base::js_foot() %>
+<script type="text/javascript">
+$(document).ready(function(){
+	$('.sortable').nestedSortable({
+		handle: 'div',
+		items: 'li',
+		toleranceElement: '> div'
+	});
+});
+</script>
+<% end template %>
+
+<% end view %>
+
+<!-- ================================================================== -->
+
+<% view admin_html_menu uses content::admin %>
+        <% template render() %>
+                <li><a href="<% url "/admin" %>"><% gt "Admin" %></a></li>
+        <% end %>
+<% end view %>
+
+<% view admin_html_left uses content::admin %>
+<% end view %>
+
+<% view admin_html_right uses content::admin %>
+<% end view %>
+
+<% view admin_html_top uses content::admin %>
+<% end view %>
+
+<% view admin_html_bottom uses content::admin %>
+<% end view %>
+
+<% view admin_html_content uses content::admin %>
+<% end view %>
+
+<% end skin %>

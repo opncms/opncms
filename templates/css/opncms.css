@@ -1,0 +1,19 @@
+label.valid {
+        width: 24px;
+        height: 24px;
+        background: url(img/valid.png) center center no-repeat;
+        display: inline-block;
+        text-indent: -9999px;
+        }
+label.error {
+        color: red;
+        margin-top: 2px;
+        margin-bottom: 0;
+        }
+.hero-unit {
+        padding-left: 1em;
+        }
+
+@media (min-width:768px){.container{width:auto}}
+@media (min-width:992px){.container{width:auto}}
+@media (min-width:1200px){.container{width:auto}}

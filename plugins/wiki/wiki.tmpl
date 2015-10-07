@@ -1,0 +1,70 @@
+<% c++ #include "wiki.h" %>
+<% xhtml %>
+<% skin %>
+<% view wiki uses content::wiki extends base %>
+
+<% template css_head() %>
+<% include base::css_head() %>
+<link rel="stylesheet" href="<%= media %>/css/wiki.css" type="text/css">
+<% end template %>
+
+<% template js_head() %>
+<% include base::js_head() %>
+<script src="<%= media %>/js/jscolor.js" type="text/javascript"></script>
+<script src="<%= media %>/js/wiki.js" type="text/javascript"></script>
+<% end template %>
+
+<% template plugin_content() %>
+<form action="" method="post">
+<% form as_table wiki_form %>
+</form>
+<% end template %>
+
+<% template int_header() %><%= name %><% end template %>
+<!-- FIXME: hardcode url -->
+<% template int_nav() %><a href="/w/<%= wiki_page %>/edit">edit</a> | <a href="/w/<%= wiki_page %>/diff">diff</a> | <% if not wiki_edit %><a onclick="$(this).parents('#sidebar2-content').find('.info_holder').toggleClass('hidden');return false;" href="#info">info</a><% end %><% end template %>
+
+<% template wiki_page() %>
+<div id="wiki">
+<div class="wiki_main">
+        <div class="wiki_title"><%= wiki_title %></div>
+        <div class="wiki_content"><%= wiki_content | ext markdown %></div>
+        <div class="wiki_tags">#<%= wiki_tags %></div>
+</div>
+<div class="wiki_side"><%= wiki_sidebar | ext markdown %></div>
+<div class="info_holder hidden">
+<h3>page info</h3>
+<hr><br>
+        <ol class="nav-base">
+	<li><a href="<%= wiki_link %>"><div class="magnet"></div></a></li>
+        <% foreach p rowid idx in wiki_info %>
+                <% item %><% if not empty p.second %><li><div class="elipses"><b><%= p.first %></b>: <%= p.second %></div></li><% end %><% end %>
+        <% end %>
+        </ol>
+</div>
+</div>
+<% end template %>
+
+<% template int_content() %>
+<% if wiki_edit %>
+<form action="" method="post">
+<table><% form as_table wiki_form.fields %></table>
+<p><% form as_space wiki_form.buttons %></p>
+</form>
+<% if wiki_preview %>
+<hr>
+<% include wiki_page() %>
+<% end %>
+<% else %>
+<% include wiki_page() %>
+<% end %>
+
+<% end template %>
+
+<% template render() %>
+	<% include base::header() %><% include base::body() %>
+<% end template %>
+
+<% end view %>
+
+<% end skin %>

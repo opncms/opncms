@@ -1,0 +1,3 @@
+#define opncms_VERSION_MAJOR @opncms_VERSION_MAJOR@
+#define opncms_VERSION_MINOR @opncms_VERSION_MINOR@
+#define opncms_VERSION_PATCH @opncms_VERSION_PATCH@

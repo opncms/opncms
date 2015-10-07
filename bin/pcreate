@@ -1,0 +1,79 @@
+###############################################################################
+#                                                                             
+#  Copyright (C) 2010-2015  Yakunin Vladimir (kpeo) <kpeo.y3k@gmail.com>     
+#                                                                             
+#  See accompanying file COPYRIGHT.TXT file for licensing details.
+#
+###############################################################################
+
+#!/usr/bin/python
+
+__requires__ = 'python>=2.4'
+
+import sys, os, inspect
+from os.path import isfile
+from string import Template
+
+tlist = ["plug_cpp.t","plug_h.t","plug_tmpl.t","plug_make.t"]
+exlist = [".cpp",".h",".tmpl",".make"]
+str = ""
+plug_var = {'version': '0.0.1', 'name': 'Plugin', 'slug': 'p', 'base template header': 'base.h', 'path to base template': '../../opncms/base.tmpl'}
+
+
+if (len(sys.argv) != 2):
+        print 'Usage: pcreate <plugin_short_name>'
+        exit(1)
+
+for key in plug_var:
+        s = raw_input( "Type a " + key + " [" + plug_var[key] + "]: " ).rstrip( '\n' );
+        if(s):
+                plug_var[key] = s
+
+items = 0
+plug_arg = sys.argv[1]
+fdir = os.path.dirname(inspect.getfile(inspect.currentframe()))
+
+if not os.path.exists(plug_arg):
+        os.makedirs(plug_arg)
+
+os.chdir(plug_arg)
+
+for idx,f in enumerate(tlist):
+        if not isfile(fdir + '/' + f):
+                print 'Can`t find file ' + fdir + '/' + f
+                continue
+
+        outfile = exlist[idx]
+        if outfile == ".make":
+                outfile = "Makefile"
+        else:
+                outfile = plug_arg + outfile
+        if isfile(outfile):
+                print 'File ' + outfile + ' already exist'
+                continue
+
+        with open(fdir + '/' + f,"r") as fr:
+                str = fr.read()
+        fr.close()
+
+        d = dict(plug=plug_arg, plug_base_tmpl=plug_var['path to base template'], plug_base_h=plug_var['base template header'], plug_name=plug_var['name'], plug_slug=plug_var['slug'], plug_version=plug_var['version'])
+        str = Template(str).substitute(d)
+
+        with open(outfile,"w") as fw:
+                fw.write(str)
+        fw.close()
+
+        items += 1
+
+if items:
+        print "Plugin files successfully created."
+        print "- Enter `cd " + plug_arg + " && make` to compile it"
+        print "- Put `" + plug_arg + ".so` to plugins.root directory defined in plugins.conf"
+        print "- Put `lib" + plug_arg + "_view.so` to application`s directory"
+        print "- Add `" + plug_arg + "_view` to views.skins section of config.js"
+        print "- Add `" + plug_arg + "` to plugins.enabled section of plugins.conf"
+else:
+        print "Plugin files don`t created, because of errors (see above)."
+
+exit(0)
+

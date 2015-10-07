@@ -1,0 +1,148 @@
+# Russian Translation.
+# Copyright (C) 2011 kpeo
+# This file is distributed under the same license as the opnCMS package.
+# kpeo <kpeo.y3k@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ru\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-01-24 01:08+0300\n"
+"PO-Revision-Date: 2011-01-24 01:17+0300\n"
+"Last-Translator: kpeo <kpeo.y3k@gmail.com>\n"
+"Language-Team: Russian <ru@li.org>\n"
+"Language: Russian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: base.cpp:111
+msgid "LANG"
+msgstr "Русский"
+
+#: page.cpp:24
+#: /media/opnp/opncms/templates/page.tmpl:37
+msgid "username"
+msgstr "пользователь"
+
+#: page.cpp:25
+#: /media/opnp/opncms/templates/page.tmpl:40
+msgid "password"
+msgstr "пароль"
+
+#: page.cpp:26
+msgid "login"
+msgstr "логин"
+
+#: page.cpp:52
+msgid "Username"
+msgstr "Пользователь"
+
+#: page.cpp:53
+msgid "Password"
+msgstr "Пароль"
+
+#: page.cpp:54
+msgid "Confirm"
+msgstr "Подтвердить"
+
+#: page.cpp:55
+msgid "Solve"
+msgstr "Исправить"
+
+#: page.cpp:56
+msgid "Submit"
+msgstr "Отправить"
+
+#: page.cpp:92
+msgid "You can`t use this login"
+msgstr "Этот логин нельзя использовать"
+
+#: page.cpp:98
+msgid "This user exists"
+msgstr "Пользователь уже существует"
+
+#: page.cpp:110
+msgid "Title"
+msgstr "Заглавие"
+
+#: page.cpp:111
+msgid "Content"
+msgstr "Содержимое"
+
+#: page.cpp:112
+msgid "Sidebar"
+msgstr "Меню"
+
+#: page.cpp:113
+msgid "Save"
+msgstr "Сохранить"
+
+#: page.cpp:114
+msgid "Save and Continue"
+msgstr "Сохранить и продолжить"
+
+#: page.cpp:115
+msgid "Preview"
+msgstr "Предпросмотр"
+
+#: page.cpp:120
+msgid "Disable editing by visitors"
+msgstr "Только для пользователей"
+
+#: page.cpp:121
+msgid "Please Login"
+msgstr "Пожалуйста авторизуйтесь"
+
+#: /media/opnp/opncms/templates/base.tmpl:6
+msgid "opnCMS"
+msgstr ""
+
+#: /media/opnp/opncms/templates/page.tmpl:44
+msgid "native keymap"
+msgstr "русская раскладка"
+
+#: /media/opnp/opncms/templates/page.tmpl:67
+msgid "a-zA-Z"
+msgstr "а-яА-Я"
+
+#: /media/opnp/opncms/templates/page.tmpl:81
+msgid "remember me"
+msgstr "запомнить"
+
+#: /media/opnp/opncms/templates/page.tmpl:87
+msgid "connect"
+msgstr "соединить"
+
+#: /media/opnp/opncms/templates/page.tmpl:91
+msgid "register"
+msgstr "регистрация"
+
+#: /media/opnp/opncms/templates/page.tmpl:98
+msgid "remind password"
+msgstr "вспомнить пароль"
+
+#: /media/opnp/opncms/templates/page.tmpl:236
+msgid "opnCMS - new page"
+msgstr "opnCMS - новая страница"
+
+#: /media/opnp/opncms/templates/page.tmpl:238
+msgid "opnCMS - edit page"
+msgstr "opnCMS - редактирование страницы"
+
+#: /media/opnp/opncms/templates/page.tmpl:244
+msgid "back to page"
+msgstr "вернуться к странице"
+
+#: /media/opnp/opncms/templates/page.tmpl:246
+msgid "changes"
+msgstr "изменения"
+
+#: /media/opnp/opncms/templates/page.tmpl:283
+msgid "opnCMS - register"
+msgstr "opnCMS - регистрация"
+
+#: /media/opnp/opncms/templates/page.tmpl:305
+msgid "opnCMS - create project"
+msgstr "opnCMS - создать проект"
+

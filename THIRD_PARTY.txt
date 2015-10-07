@@ -1,0 +1,29 @@
+
+ opnCMS uses and embeds some third party software:
+
+
+ Embedded Third Party Software:
+ ------------------------------
+ - src/base64.cpp - http://www.adp-gmbh.ch/cpp/common/base64.html
+
+ Third Party Software Used by CppCMS (not embedded)
+ ---------------------------------------------
+
+ Mandatory build dependencies:
+
+ - CMake - http://www.cmake.org/
+ - Python - http://python.org/
+
+ Mandatory runtime dependencies:
+
+ - Standard C and C++ libraries
+ - CppCMS - http://cppcms.com/
+ - CppDB - CppDB session storage
+ - Discount - Markdown library
+ 
+ Additional independent components that may be
+ used with opnCMS:
+
+ - Berkeley DB - BDB session storage
+ - Sqlite3 - Sqlite3 session storage
+

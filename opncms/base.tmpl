@@ -1,0 +1,272 @@
+<% c++ #include <opncms/base.h> %>
+<% xhtml %>
+<% skin %>
+<% view base uses content::base %>
+
+<% template plugin_title() %>
+<% end %>
+
+<% template title() %>
+        <% if not empty title %><%= site_title %><% else %>opnCMS<% end %>
+<% end %>
+
+<% template favicon() %>
+    <link rel="shortcut icon" href="<%= media %>/ico/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="<%= media %>/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="<%= media %>/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="<%= media %>/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="<%= media %>/ico/apple-touch-icon-57-precomposed.png">
+<% end %>
+
+<% template meta_description() %>
+<% end template %>
+
+<% template meta_author() %>
+<% end template %>
+
+<% template plugin_css() %>
+	<% if is_css %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_css() %><% render p->skin(),p->view("html_css") with p->html_css() %><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template plugin_js_head() %>
+	<% if is_js_head %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_js_head() %><% render p->skin(),p->view("html_js_head") with p->html_js_head() %><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template css_head() %>
+    <link href="<%= media %>/css/bootstrap.min.css" rel="stylesheet">
+<!--    <link href="<%= media %>/css/bootstrap-theme.min.css" rel="stylesheet"> -->
+    <link href="<%= media %>/css/opncms.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+	<% include plugin_css() %>
+<% end template %>
+
+<% template js_head() %>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="<%= media %>/js/json2.min.js"></script>
+    <![endif]-->
+<script src="<%= media %>/js/jsonrpc.min.js"></script>
+<script src="<%= media %>/js/jquery.min.js"></script>
+    <% include plugin_js_head() %>
+<% end %>
+
+<% template search() %>
+	<form class="navbar-form navbar-right">
+		<input type="text" class="form-control" placeholder="<% gt "Search" %>...">
+	</form>
+<% end template %>
+
+<% template alerts() %>
+<!-- alerts -->
+	<% if is_alert %>
+		<% if alert_dismiss %>
+			<div class="alert alert-<%= alert_type %> fade in" role="alert">
+				<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+				<%= alert_text %>
+			</div>
+		<% else %>
+			<div class="alert alert-<%= alert_type %> fade in" id="middle-header-<%= alert_type %>"><%= alert_text %></div>
+		<% end %>
+	<% end %>
+<% end template %>
+
+<% template plugin_menu() %>
+	<% if is_menu %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_menu() %><% render p->skin(),p->view("html_menu") with p->html_menu() %><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template plugin_left() %>
+	<% if is_left %>
+	<div class="span3">
+		<div class="plugins-left">
+			<% foreach p in plugins %>
+				<% item %><% if p->is_left() %><div class="plugin-left" id="plugin-left-<%= p->slug() %>"><% render p->skin(),p->view("html_left") with p->html_left() %></div><% end %><% end %>
+			<% end %>
+		</div>
+	</div><!--/span-->
+	<% end %>
+<% end template %>
+
+<% template plugin_right() %>
+	<% if is_right %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_right() %><div class="plugin-right" id="plugin-right-<%= p->slug() %>"><% render p->skin(),p->view("html_right") with p->html_right() %></div><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template plugin_top() %>
+	<% if is_top %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_top() %><div class="plugin-top" id="plugin-top-<%= p->slug() %>"><% render p->skin(),p->view("html_top") with p->html_top() %></div><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template plugin_bottom() %>
+	<% if is_bottom %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_bottom() %><div class="plugin-bottom" id="plugin-bottom-<%= p->slug() %>"><% render p->skin(),p->view("html_bottom") with p->html_bottom() %></div><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template plugin_content() %>
+	<% if is_content %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_content() %><div class="plugin-content" id="plugin-content-<%= p->slug() %>"><% render p->skin(),p->view("html_content") with p->html_content() %></div><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template content_title() %>Welcome to <% if not empty site_title %><%= site_title %><% else %>opnCMS<% end %>!<% end template %>
+
+<% template plugin_js_foot() %>
+	<% if is_js_foot %>
+	<% foreach p in plugins %>
+		<% item %><% if p->is_js_foot() %><% render p->skin(),p->view("html_js_foot") with p->html_js_foot() %><% end %><% end %>
+	<% end %>
+	<% end %>
+<% end template %>
+
+<% template js_foot() %>
+<script src="<%= media %>/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+$(function() {
+  // Setup drop down menu
+  $('.dropdown-toggle').dropdown();
+ 
+  // Fix input element click problem
+  $('.dropdown input, .dropdown label').click(function(e) {
+    e.stopPropagation();
+  });
+});
+$('#button_id').click(function(){
+    $('#myModal').modal('show')
+});
+</script>
+<% include plugin_js_foot() %>
+<% end %>
+
+<% template lang() %>
+	<% foreach r rowid idx in languages %>
+		<% item %><a id="hdrm_<%= r.second %>" linkindex="<%= idx %>" href="/<%= r.second %>"><%= r.first %></a>
+		<% end %><% empty %><a id="hdrm_last" linkindex="100"<!-- loop.index --> href=""></a>
+	<% end %>
+<% end template %>
+
+<% template footer() %>
+	<div class="lang"><% include lang() %></div>
+	<% if not empty copyright %><%= copyright %><% else %><div id="copyright">Powered by opnCMS &copy; 2010-2015</div><% end %>
+<% end template %>
+
+<% template header() %>
+<!DOCTYPE HTML>
+<html lang="<% if not empty locale %><%= locale %><% else %>en<% end %>">
+<head>
+	<meta charset="utf-8">
+	<title><% include title() %><% include plugin_title() %></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="<% include meta_description() %>">
+	<meta name="author" content="<% include meta_author() %>">
+	<% include favicon() %>
+	<% include css_head() %>
+	<% include js_head() %>
+</head>
+<% end template %>
+
+<% template body() %>
+<body>
+   <nav class="navbar <% if navbar_inverse %>navbar-inverse<% else %>navbar-default<% end %> navbar-fixed-top" role="navigation">
+    <div class="<% if container_fluid %>container-fluid<% else %>container<% end %>">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar" >
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/"><% include title() %></a>
+      </div><!-- navbar-header -->
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-right">
+<% if authed %>
+          <li><a href="/u/profile" class="navbar-link"><%= username %></a></li>
+<% end %>
+          <% include plugin_menu() %>
+        </ul>
+<% if is_search %>
+	<% include search() %>
+<% end %>
+
+      </div><!--collapse -->
+    </div><!-- container -->
+  </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+          <% include plugin_left() %>
+        <div class="span9" <% if not is_left %>style="width:100%;"<% end %>>
+		<% include alerts() %>
+
+          <div class="plugins-top">
+            <% include plugin_top() %>
+          </div>
+        <% if homepage %>
+          <div class="hero-unit">
+            <h1><% include content_title() %></h1>
+          </div>
+        <% end %>
+
+        <div class="plugins-content">
+          <% include plugin_content() %>
+        </div>
+
+        <div class="plugins-bottom">
+          <% include plugin_bottom() %>
+        </div>
+  
+        </div><!--/span9-->
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <% include footer() %>
+      </footer>
+
+    </div><!--container-->
+
+    <!-- Placed at the end of the document so the pages load faster -->
+    <% include js_foot() %>
+  </body>
+</html>
+<% end template %>
+
+<% template render() %>
+<% include header() %><% include body() %>
+<% end template %>
+
+<% end view %>
+
+<% end skin %>
