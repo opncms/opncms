@@ -38,6 +38,56 @@ namespace mod
 	View* view = &ioc::get<View>();
 }
 */
+
+namespace cppcms {  
+namespace json {  
+	template<>
+	struct traits<plugins_config> {
+
+	static void set(value &v, plugins_config const &in)
+	{
+		v.set<std::string>("plugins.root",in.root);
+		std::vector<plugin> p = in.plugins;
+		cppcms::json::array arr;
+		std::string s = "plugins.";
+		for(std::vector<plugin>::const_iterator it = p.begin(); it != p.end(); ++it)
+		{
+			if(it->enabled)
+				arr.push_back(it->name);
+			v.set<std::string>(s + it->name + ".skin", it->skin);
+			v.set<std::vector<std::string> >(s + it->name + ".url", it->url);
+			v.set<std::vector<std::string> >(s + it->name + ".rpc", it->rpc);
+		}
+		v.set<array>("plugins.enabled", arr);
+	}
+	
+	static plugins_config get(value const &v)
+	{
+		plugins_config p;
+		if(v.type() != is_object)
+			throw bad_value_cast();
+		p.root = v.get<std::string>("plugins.root","");
+		std::vector<std::string> arr = v.get<std::vector<std::string> >("plugins.enabled");
+		cppcms::json::object ob = v.get<cppcms::json::object>("plugins");
+		plugin pp;
+		std::string s = "plugins.";
+		std::string tmp;
+		for(cppcms::json::object::const_iterator it = ob.begin(); it != ob.end(); ++it)
+		{
+			pp.name = it->first.str();
+			if(pp.name == "root" || pp.name == "enabled") //reserved keys
+				continue;
+			pp.enabled = ( std::find(arr.begin(),arr.end(),pp.name) != arr.end() );
+			pp.skin = v.get<std::string>(s+pp.name+".skin");
+			pp.url = v.get<std::vector<std::string> >(s+pp.name+".url");
+			pp.rpc = v.get<std::vector<std::string> >(s+pp.name+".rpc");
+			p.plugins.push_back(pp);
+		}
+		return p;
+	}
+	};
+}}
+
 namespace content {
 
 }//namespace content
@@ -53,7 +103,20 @@ public:
 	data( &ioc::get<Data>() ),
 	view( &ioc::get<View>() )
 	{}
-
+	void get_config(plugins_config& p, const std::string& conf)
+	{
+		cppcms::json::value v;
+		data->driver("file").get(v,conf);
+		BOOSTER_LOG(debug, __FUNCTION__) << tools::json_to_string(v);
+		p = v.get_value<plugins_config>();
+	}
+	void set_config(plugins_config& p, const std::string& conf)
+	{
+		cppcms::json::value v;
+		v.set_value<plugins_config>(p);
+		data->driver("file").set(conf,v);
+	}
+	
 private:
 	Auth* auth;// = &ioc::get<Auth>();
 	Data* data;// = &ioc::get<Data>();
@@ -129,10 +192,7 @@ public:
 		impl.view->post(c);
 
 		c.name = name();
-		cppcms::json::value v;
-		impl.data->driver("file").get(v,"plugins.js");
-		BOOSTER_LOG(debug, __FUNCTION__) << tools::json_to_string(v);
-		tools::json_to_map(c.config, v);
+		impl.get_config(c.plugins,"plugins.js");
 		
 		if(impl.auth->auth())
 		{
@@ -233,15 +293,24 @@ public:
 		map_.push_back("2");
 
 		bind("system.listMethods",cppcms::rpc::json_method(&admin_rpc::methods,this),method_role);
+		bind("set_config",cppcms::rpc::json_method(&admin_rpc::set_config,this),method_role);
 
-		methods_ = boost::assign::list_of ("system.listMethods");
-		BOOST_ASSERT( methods_.size() == 1 );
+		methods_ = boost::assign::list_of ("system.listMethods")("set_config");
+		BOOST_ASSERT( methods_.size() == 2 );
 	}
 
 	virtual void methods()
 	{
 		BOOSTER_LOG(debug, __FUNCTION__);
 		return_result(methods_);
+	}
+	
+	//virtual void set_config(const std::string& data)
+	virtual void set_config(std::string s)
+	{
+		BOOSTER_LOG(debug, __FUNCTION__) << "input(" << s << ")";
+		impl.data->driver("file").set("plugins.js",s);
+		return_result(cppcms::json::value("nil"));
 	}
 
 	virtual tools::vec_str& map(){
