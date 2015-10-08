@@ -121,7 +121,14 @@ bool DataSql::create(const std::string& storage)
 	try {
 		std::stringstream ss;
 		//we should consider maximum hash size (512) + type (1) for key
-		ss << std::string("CREATE TABLE ") << storage << "(key VARCHAR(513), data VARCHAR(65532));";
+		//TODO: handle JSON type since PostgreSQL v9.2
+		ss << "CREATE TABLE IF NOT EXISTS " << storage << "(key VARCHAR(513) NOT NULL ";
+		if(ioc::get<Data>().driver_name() == "sqlite3")
+			ss << "PRIMARY KEY ASC, data VARCHAR(65532));";
+		else if(ioc::get<Data>().driver_name() == "mysql")
+			ss << ", data VARCHAR(65532), PRIMARY KEY(key));";
+		else if(ioc::get<Data>().driver_name() == "odbc" || ioc::get<Data>().driver_name() == "postgresql")
+			ss << ", data VARCHAR(65532), CONSTRAINT key_pk PRIMARY KEY (key));";
 		cppdb::statement st = DataSql::session() << ss.str();
 		st.exec();
 
@@ -604,8 +611,11 @@ bool DataSql::clear(const std::string& storage)
 	
 	try {
 		std::stringstream ss;
-		ss << std::string("DROP TABLE ") << storage << ";";
-		
+		ss << std::string("DROP TABLE IF EXISTS ") << storage;
+		if(ioc::get<Data>().driver_name() != "sqlite3")
+			ss << " CASCADE;";
+		else
+			ss << ";";
 		cppdb::statement st = DataSql::session() << ss.str();
 		st.exec();
 
