@@ -246,8 +246,6 @@ std::string json_value_str(const cppcms::json::value& v)
 		return std::string( (v.boolean()) ? "true" : "false" );
 	else if(v.type() == cppcms::json::is_null)
 		return "null";
-	else if(v.type() == cppcms::json::is_undefined)
-		return "undefined";
 	return "";
 }
 
@@ -266,7 +264,21 @@ void json_to_map(std::map<std::string, std::string>& resmap, const cppcms::json:
 		}
 	}
 	else
-		resmap[path] = json_value_str(v);
+	{
+		std::string s = json_value_str(v);
+		if(!s.empty())
+			resmap[path] = s;
+	}
+}
+
+void map_to_json(const std::map<std::string, std::string>& resmap, cppcms::json::value& v)
+{
+	std::map<std::string, std::string>::const_iterator it = resmap.begin();
+	for(; it != resmap.end(); ++it)
+	{
+		BOOSTER_LOG(debug,__FUNCTION__) << "value(" << it->first << ":" << it->second << ")";
+		tools::json_set( v, it->first, tools::string_to_json(it->second) );
+	}
 }
 
 

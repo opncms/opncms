@@ -219,6 +219,16 @@ std::string json_value_str(const cppcms::json::value& /*v*/);
 void json_to_map(std::map<std::string, std::string>& /*resmap*/, const cppcms::json::value& /*v*/, const std::string& path="");
 
 ///
+/// \brief Convert std:map (with full key) to cppcms::json::value
+/// 
+void map_to_json(const std::map<std::string, std::string>& /*resmap*/, cppcms::json::value& /*v*/, const std::string& /*path*/);
+
+///
+/// \brief Convert std:map (with full key) to cppcms::json::value
+/// 
+void map_to_json(const std::map<std::string, std::string>& /*resmap*/, cppcms::json::value& /*v*/);
+
+///
 /// \brief Add/replace cppcms::json::value at key
 /// 
 void json_set(cppcms::json::value& /*v*/, const std::string& /*key*/, cppcms::json::value const& /*value*/);
