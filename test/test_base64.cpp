@@ -24,9 +24,7 @@ int main() {
 	{
 		std::cout << "Ok" << std::endl;
 		return EXIT_SUCCESS;
-	}
-	else
-	{
+	} else {
 		std::cerr << "Fail " << std::endl;
 		return EXIT_FAILURE;
 	}

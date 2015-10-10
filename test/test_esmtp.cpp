@@ -57,8 +57,7 @@ int main()
 	if (test_open("localhost:25", user, password, tlspassword)==0 && test_send(user)==0 && test_send(user)==0 && test_close()==0) {
 		std::cout << "Success" << std::endl;
 		return EXIT_SUCCESS;
-	}
-	else {
+	} else {
 		std::cerr << "Fail " << std::endl;
 		return EXIT_FAILURE;
 	}

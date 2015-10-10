@@ -355,8 +355,7 @@ void View::fill_menu(const std::string& menu, tools::vec_map& dst_menu)
 		
 		if (its != links_.end()) {
 			dst_menu.push_back(std::pair<std::string,std::string>(its->first,its->second));
-		}
-		else {
+		} else {
 			BOOSTER_LOG(error,__FUNCTION__) << "Correspondent menu element '" << *it << "' is absent in links, please check your application config for 'links' values";
 		}
 	}

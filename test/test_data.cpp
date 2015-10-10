@@ -314,8 +314,7 @@ void test::main(std::string url)
 	if (tst_file && tst_sql && tst_mongodb) {
 		std::cout << "Ok" << std::endl;
 		exit(EXIT_SUCCESS);
-	} 
-	else {
+	} else {
 		std::cerr << "Fail " << std::endl;
 		exit(EXIT_FAILURE);
 	}

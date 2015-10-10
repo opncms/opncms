@@ -273,9 +273,7 @@ public:
 					//c.alert_dismiss = false;
 					c.alert_text = "User already exists";
 					c.alert_type = "danger";
-				}
-				else
-				{
+				} else {
 					//generate verification code & create user
 					const std::string user_email = req.post("email");
 					const std::string user_password = req.post("password");
@@ -290,9 +288,7 @@ public:
 						c.alert_dismiss = true;
 						c.alert_text = "Please, try again";
 						c.alert_type = "danger";
-					}
-					else
-					{
+					} else {
 						//send verification hash
 						impl.send_email(user_email, user_name, "/u/verify/", hash, 0);
 						BOOSTER_LOG(debug,__FUNCTION__) << "redirect to verify page";
@@ -307,13 +303,12 @@ public:
 				BOOSTER_LOG(debug,__FUNCTION__) << "input.name=" << req.post("name");
 				BOOSTER_LOG(debug,__FUNCTION__) << "input.password=" << req.post("password");
 			}
-			else {
+			else
 				BOOSTER_LOG(debug,__FUNCTION__) << "POST unknown data";
-			}
 		}
-		else {
+		else
 			BOOSTER_LOG(debug,__FUNCTION__) << " req != POST";
-		}
+
 		return false;
 	}
 
@@ -357,9 +352,7 @@ public:
 					c.alert_text = "Please, try again";
 					c.alert_type = "danger";
 					return 0;
-				}
-				else
-				{
+				} else {
 					//send hash to email
 					BOOSTER_LOG(debug,__FUNCTION__) << "Send hash to email(" << reset_email << ")";
 					impl.send_email(reset_email, "user", "/u/reset/", hash, 1);
@@ -389,13 +382,12 @@ public:
 				impl.data->driver().erase("hashes",reset_id);
 				return 2;
 			}
-			else {
+			else
 				BOOSTER_LOG(debug,__FUNCTION__) << "POST unknown data";
-			}
 		}
-		else {
+		else
 			BOOSTER_LOG(debug,__FUNCTION__) << " req != POST";
-		}
+
 		return 0;
 	}
 	
@@ -507,17 +499,13 @@ public:
 				//c.alert_type = "info";
 				//impl.auth->password(email, newpassword)
 				impl.view->response().set_redirect_header("/u");
-			}
-			else
-			{
+			} else {
 				BOOSTER_LOG(debug, __FUNCTION__) << "Account not verified";
 				c.is_alert = true;
 				c.alert_text = "Account is not verified, please check the code is correct";
 				c.alert_type = "danger";
 			}
-		}
-		else
-		{
+		} else {
 			c.is_alert = true;
 			//c.alert_dismiss = false;
 			c.alert_text = "Please check your email to activate the account";
@@ -562,18 +550,14 @@ public:
 				//impl.view->response().set_redirect_header("/u/");
 				c.id = id;
 				//impl.view->response().set_redirect_header("/u/");
-			}
-			else
-			{
+			} else {
 				BOOSTER_LOG(debug, __FUNCTION__) << "Account is not verified";
 				c.verified = false;
 				c.is_alert = true;
 				c.alert_text = "Account is not verified, please check the code is correct";
 				c.alert_type = "danger";
 			}
-		}
-		else
-		{
+		} else {
 			c.is_alert = true;
 			//c.alert_dismiss = false;
 			c.alert_text = "Please input your email to reset the password";
@@ -624,13 +608,11 @@ public:
 					return false;
 				}
 			}
-			else {
+			else
 				BOOSTER_LOG(debug,__FUNCTION__) << "POST unknown data";
-			}
 		}
-		else {
+		else
 			BOOSTER_LOG(debug,__FUNCTION__) << " req != POST";
-		}
 
 		//c.authed = ioc::get<Auth>().auth();
 		//c.remind = ioc::get<Auth>().remind();
@@ -781,15 +763,11 @@ public:
 				}
 				//ioc::get<Auth>().ref().create(ioc::get<Auth>().username(), ioc::get<Auth>().local());
 				rpc_result = true;
-			}
-			else
-			{
+			} else {
 				BOOSTER_LOG(debug,__FUNCTION__) << "Incorrect login, id(" << id << ")";
 				return_error("error");
 			}
-		}
-		else
-		{
+		} else {
 			BOOSTER_LOG(debug,__FUNCTION__) << "User " << id << " not validated. Please check the syntax";
 			return_error("error");
 		}

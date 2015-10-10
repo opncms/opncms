@@ -405,9 +405,7 @@ int main()
 	{
 		std::cout << "Success" << std::endl;
 		return EXIT_SUCCESS;
-	}
-	else
-	{
+	} else {
 		std::cerr << "Fail" << std::endl;
 		return EXIT_FAILURE;
 	}

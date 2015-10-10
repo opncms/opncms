@@ -126,9 +126,7 @@ bool DataMongodb::set(const std::string& storage, const std::string& key, cppcms
 						v.at(key).array().push_back(*it);
 					}
 				}
-			} 
-			else
-			{
+			} else {
 				if((value.type() == cppcms::json::is_object) && (v.at(key).type() == cppcms::json::is_object))
 				{
 					BOOSTER_LOG(debug,__FUNCTION__) << "Value at key is object(" << tools::json_to_string(v.at(key)) << ")";

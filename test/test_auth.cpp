@@ -169,8 +169,7 @@ void test::main(std::string url)
 	if (tst_data) {
 		std::cout << "Success" << std::endl;
 		exit(EXIT_SUCCESS);
-	} 
-	else {
+	} else {
 		std::cerr << "Fail " << std::endl;
 		exit(EXIT_FAILURE);
 	}

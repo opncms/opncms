@@ -30,8 +30,7 @@ bool DataSql::init(const std::string& driver, tools::map_str &params)
 			}
 		}
 		conn_.connection_string = conn;
-	}
-	else {
+	} else {
 		//use default parameters
 		conn_.connection_string = OPNCMS_DATA_SQL_PARAM;
 	}
@@ -429,18 +428,14 @@ bool DataSql::set(const std::string& storage, cppcms::json::value& value)
 				ss << std::string("INSERT INTO ") << storage << "(data,key) VALUES(?,?)";
 			else
 				ss << std::string("UPDATE ") << storage << " SET data=? WHERE key=?;";
-		}
-		else
-		{
+		} else {
 			s = DataSql::get( storage, it_first );
 
 			if(s.empty() || s == "")
 			{
 				BOOSTER_LOG(debug,__FUNCTION__) << "insert new value";
 				ss << std::string("INSERT INTO ") << storage << "(data,key) VALUES(?,?)";
-			}
-			else
-			{
+			} else {
 				BOOSTER_LOG(debug,__FUNCTION__) << "update value: (" << s << ")";
 				ss << std::string("UPDATE ") << storage << " SET data=? WHERE key=?;";
 			}
@@ -517,9 +512,7 @@ bool DataSql::set(const std::string& storage, const std::string& key, cppcms::js
 		ss << std::string("INSERT INTO ") << storage << "(data, key) VALUES(?,?)";
 		tools::json_set(v, key, value); //create the new value at full key
 		newdata_first = tools::json_to_string(v.find(key_first));
-	}
-	else
-	{
+	} else {
 		bool matched = (dotted) ? (v.find(key_second) == value) : (v == value);
 		
 		if(matched) {

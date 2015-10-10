@@ -147,8 +147,7 @@ int main()
 	if (test_salt_int(6)==0 && test_salt_max(31)==0 && test_salt(12)==0 && test_hash()==0 && test_international_chars(12)==0) {
 		std::cout << "Success" << std::endl;
 		return EXIT_SUCCESS;
-	}
-	else {
+	} else {
 		std::cerr << "Fail " << std::endl;
 		return EXIT_FAILURE;
 	}

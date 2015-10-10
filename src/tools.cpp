@@ -179,9 +179,7 @@ void path_prev(const std::string& path, const std::string& delim, std::string& p
 	{
 		prev_path = "";
 		prev_key = path;
-	}
-	else
-	{
+	} else {
 		prev_path = s.substr(0,found);
 		prev_key = s.substr(found+1);
 	}
@@ -262,9 +260,7 @@ void json_to_map(std::map<std::string, std::string>& resmap, const cppcms::json:
 			else
 				resmap[path + it->first.str()] = json_value_str(it->second);
 		}
-	}
-	else
-	{
+	} else {
 		std::string s = json_value_str(v);
 		if(!s.empty())
 			resmap[path] = s;
@@ -325,9 +321,7 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 							//std::cerr << "Add value[" << it->first << ":" << it->second << "]";
 							BOOSTER_LOG(debug,__FUNCTION__) << "Add value[" << it->first << ":" << it->second << "]";
 							t.insert(std::make_pair(it->first,it->second));
-						}
-						else
-						{
+						} else {
 							if( t[it->first] != it->second )
 							{
 								//std::cerr << "Replace value[" << it->first << ":" << it->second << "]";
@@ -364,9 +358,7 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 									t.at(i).object()[it->first] = it->second;
 									replaced = 2;
 									break;
-								}
-								else
-								{
+								} else {
 									replaced = 1;
 									break;
 								}
@@ -381,9 +373,7 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 					//std::cerr << "Result value[" << json_to_string(t) << "]";
 					BOOSTER_LOG(debug,__FUNCTION__) << "Result value[" << tools::json_to_string(t) << "]";
 					break;
-				}
-				else
-				{
+				} else {
 					// Value -> Array
 					std::cerr << "Value at key[" << tools::json_to_string(v.at(key)) << "]";
 					BOOSTER_LOG(debug,__FUNCTION__) << "Value at key[" << tools::json_to_string(v.at(key)) << "]";
@@ -405,9 +395,7 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 						BOOSTER_LOG(debug,__FUNCTION__) << "Add value[" << value << "]";
 						t.push_back(value);
 					}
-				}
-				else
-				{
+				} else {
 					v.at(key,value);
 				}
 			}
@@ -433,9 +421,7 @@ void json_erase(const std::string& key, cppcms::json::value& v)
 			cppcms::json::object::iterator it = v.at(p1).object().find(p2);
 			v.at(p1).object().erase(it);
 			BOOSTER_LOG(debug,__FUNCTION__) << "value after: [" << tools::json_to_string(v.at(p1)) << "]";
-		}
-		else
-		{
+		} else {
 			BOOSTER_LOG(debug,__FUNCTION__) << "value before: [" << tools::json_to_string(v) << "]";
 			cppcms::json::object::iterator it = (p2.empty()) ? v.object().begin() : v.object().find(p2);
 			v.object().erase(it);
@@ -456,7 +442,8 @@ bool load(const std::string& file, const std::string& tmpl, cppcms::json::value&
 
 	booster::nowide::ifstream fin(file.c_str(), booster::nowide::ifstream::in);
 
-	if (!fin) {
+	if (!fin)
+	{
 		BOOSTER_LOG(debug,__FUNCTION__) << "Can`t open file: " << file << ", try use template file: " << tmpl;
 
 		if (!tmpl.empty())
@@ -483,9 +470,10 @@ bool load(const std::string& file, const std::string& tmpl, cppcms::json::value&
 			fin.close();
 			return false; //this is not error actually, just signal for calling func
 		}
-	} else {
-		BOOSTER_LOG(debug,__FUNCTION__) << "File is empty";
 	}
+	else
+		BOOSTER_LOG(debug,__FUNCTION__) << "File is empty";
+
 	fin.close();
 	return true;
 }
@@ -500,7 +488,8 @@ bool save(const std::string& file, const std::string& tmpl, cppcms::json::value&
 {
 	boost::filesystem::path file_path(file);
 	
-	if( !boost::filesystem::exists(file_path) ) {
+	if( !boost::filesystem::exists(file_path) )
+	{
 		BOOSTER_LOG(debug,__FUNCTION__) << "file: " << file << " doesn't exists, create new one";
 
 		//check directory for new user (one recursion)
@@ -516,8 +505,7 @@ bool save(const std::string& file, const std::string& tmpl, cppcms::json::value&
 
 		if( !tmpl.empty() )
 			boost::filesystem::copy_file(boost::filesystem::path(tmpl), file_path);
-	}
-	else {
+	} else {
 		BOOSTER_LOG(debug,__FUNCTION__) << "file exists, backup " << ((backup)?"on":"off");
 
 		if(backup)
@@ -534,8 +522,7 @@ bool save(const std::string& file, const std::string& tmpl, cppcms::json::value&
 			throw tools::parsing_error("Error in saving value");
 			return false;
 		}
-	}
-	else {
+	} else {
 		BOOSTER_LOG(debug,__FUNCTION__) << "value is undefined - save empty string";
 	}
 	fout.close();
@@ -934,8 +921,7 @@ bool send_email(const std::string& user, const std::string& password, const std:
 	std::string host = get_hostname();
 	std::string mailhost;
 
-	if(host.empty())
-	{
+	if(host.empty()) {
 		host = "localhost";
 		mailhost = "localhost:25";
 	}
