@@ -360,7 +360,7 @@ int test_hash()
 
 int test_random()
 {
-	std::cerr << "random ";
+	std::cerr << "random";
 	unsigned long rnd[10];
 	for(int i=0; i<10; i++)
 	{
@@ -386,7 +386,27 @@ int test_random()
 	//TODO: check the correlation using Pearson's coefficient
 	if(a==b)
 		return 1;
-	//std::cerr << "random a: " << a;
+	std::cerr << ".";
+	std::cerr << "Ok" << std::endl;
+	return 0;
+}
+
+int test_local()
+{
+	std::cerr << "is_local";
+	tools::if_ip_list ip_list;
+	if(ip_list.empty())
+		return 1;
+	std::cerr << ".";
+	if(!tools::is_ip("127.0.0.1"))
+		return 1;
+	std::cerr << ".";
+	if(!ip_list.find("127.0.0.1"))
+		return 1;
+	std::cerr << ".";
+	if(!tools::is_local(ip_list,"127.0.0.1"))
+		return 1;
+	std::cerr << ".";
 	std::cerr << "Ok" << std::endl;
 	return 0;
 }
@@ -400,7 +420,8 @@ int main()
 	test_vexec()==0 &&
 	test_json_set()==0 &&
 	test_hash()==0 &&
-	test_random()==0
+	test_random()==0 &&
+	test_local()==0
 	)
 	{
 		std::cout << "Success" << std::endl;

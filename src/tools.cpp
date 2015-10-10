@@ -42,7 +42,8 @@ std::string& trim(std::string& s) {
 }
 
 // convert string to hex string
-void str2hex(const std::string& s, std::string& d) {
+void str2hex(const std::string& s, std::string& d)
+{
 	register unsigned char x,y;
 	char *p = (char*)s.data();
 	d.resize(s.size()*2);
@@ -306,7 +307,7 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 				break;
 			}
 			// Adding Object
-			case cppcms::json::is_object:{
+			case cppcms::json::is_object: {
 				// Object -> Object
 				if(vv.type() == cppcms::json::is_object)
 				{
@@ -372,7 +373,6 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 						t.push_back(tmp);
 					//std::cerr << "Result value[" << json_to_string(t) << "]";
 					BOOSTER_LOG(debug,__FUNCTION__) << "Result value[" << tools::json_to_string(t) << "]";
-					break;
 				} else {
 					// Value -> Array
 					std::cerr << "Value at key[" << tools::json_to_string(v.at(key)) << "]";
@@ -382,6 +382,7 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 					if(it == t.end())
 						t.push_back(*it);
 				}
+				break;
 			}
 			default:{
 				if(vv.type() == cppcms::json::is_array)
@@ -537,7 +538,8 @@ bool save(const std::string& file, cppcms::json::value& v, bool backup)
 }
 
 //for ffind see so/q/612097/list files
-int list(const std::string& dir, std::vector<std::string>& files) {
+int list(const std::string& dir, std::vector<std::string>& files)
+{
 	BOOSTER_LOG(debug,__FUNCTION__) << "directory: " << dir;
 	int cnt = 0;
 #ifdef OPNP_WIN_NATIVE
@@ -565,17 +567,26 @@ int list(const std::string& dir, std::vector<std::string>& files) {
 #else
 	DIR *dp; //http://www.linuxquestions.org/questions/programming-9/c-list-files-in-directory-379323/
 	struct dirent *dirp;
-	if ((dp  = opendir(dir.c_str())) == NULL) {
+	if ((dp = opendir(dir.c_str())) == NULL) {
 		BOOSTER_LOG(error,__FUNCTION__) << "Error(" << errno << ") opening dir " << dir;
 		return 0;
 	}
 
-	while ((dirp = readdir(dp)) != NULL) {
-		if ( !( strcmp(dirp->d_name,".") && strcmp(dirp->d_name,"..") ) )
-			continue;
+	while ((dirp = readdir(dp)) != NULL)
+	{
+		try
+		{
+			if ( !( strncmp(dirp->d_name,".",1) && strncmp(dirp->d_name,"..",2) ) )
+				continue;
 
-		files.push_back(std::string(dirp->d_name));
-		cnt++;
+			files.push_back(std::string(dirp->d_name));
+			cnt++;
+		}
+		catch (std::exception& e)
+		{
+			closedir(dp);
+			BOOSTER_LOG(error,__FUNCTION__) << e.what();
+		}
 	}
 	closedir(dp);
 #endif
@@ -610,29 +621,6 @@ time_t get_mtime(const std::string& filename)
 		return 0;
 #endif
 	return st.st_mtime;
-}
-
-bool set_mtime(const std::string& filename, time_t newtime)
-{
-#ifdef OPNCMS_WIN_NATIVE
-    struct _wstat st;
-    struct _utimbuf t;
-	const char* filename_conv = booster::nowide::convert(filename).c_str();
-    if (_wstat(filename_conv, &st) != 0)
-        return false;
-    t.actime = st.st_atime;
-    t.modtime = newtime;
-    return _utime(filename_conv, &t) == 0;
-#else
-    struct stat st;
-    struct utimbuf t;
-	const char* filename_c = filename.c_str();
-    if (stat(filename_c, &st) != 0)
-        return false;
-    t.actime = st.st_atime;
-    t.modtime = newtime;
-    return utime(filename_c, &t) == 0;
-#endif
 }
 
 std::string string_hash(const std::string& s, const std::string& htype)
@@ -696,6 +684,18 @@ std::string magnet(const std::string& str, const std::string& tags)
 	return m;
 }
 
+void init_random()
+{
+	struct timespec ts;
+	if(clock_gettime(CLOCK_REALTIME, &ts))
+	{
+		BOOSTER_LOG(error,__FUNCTION__) << "clock_gettime failed";
+		srandom(time(NULL));
+	}
+	else
+		srandom(ts.tv_nsec ^ ts.tv_sec);
+}
+
 //TODO: using rtdsc?
 unsigned long get_random()
 {
@@ -720,14 +720,7 @@ unsigned long get_random()
 
 #else
 
-	struct timespec ts;
-	if(clock_gettime(CLOCK_REALTIME, &ts))
-	//if (timespec_get(&ts, TIME_UTC) == 0)
-	{
-		BOOSTER_LOG(error,__FUNCTION__) << "timespec_get failed";
-		return 0;
-	}
-	srandom(ts.tv_nsec ^ ts.tv_sec);
+	init_random();
 	return random();
 
 #endif
@@ -744,10 +737,18 @@ std::string get_random(size_t size)
 	size_t n = size;
 	unsigned long b = 0;
 	unsigned long c = 0;
-	
+
+#ifndef OPNP_WIN_NATIVE
+	init_random();
+#endif
+
 	while(n)
 	{
+#ifdef OPNP_WIN_NATIVE
 		c = get_random() % 36;
+#else
+		c = random() % 36;
+#endif
 		if(b != c)
 		{
 			rnd += a[c];
@@ -806,9 +807,16 @@ bool getfullbyname(tools::vec_str& hlist)
 		return false;
 	}
 
-	for(p = info; p != NULL; p = p->ai_next) {
-		hlist.push_back(p->ai_canonname);
+	try
+	{
+		for(p = info; p != NULL; p = p->ai_next)
+			hlist.push_back(p->ai_canonname);
 	}
+	catch (std::exception& e)
+	{
+		freeaddrinfo(info);
+		BOOSTER_LOG(error,__FUNCTION__) << e.what();
+	}	
 	freeaddrinfo(info);
 	return true;
 }
@@ -838,57 +846,102 @@ std::string get_ip(cppcms::http::request &req)
 	return req.remote_addr();
 }
 
+if_ip_list::if_ip_list()
+: ifaddrs_(NULL)
+{
+	init();
+}
+	
+void if_ip_list::init()
+{
+	if (getifaddrs(&ifaddrs_) == -1) {
+		perror("getifaddrs");
+		exit(EXIT_FAILURE);
+	}
+	if(ip_.size())
+		ip_.clear();
+	
+	struct ifaddrs *ifa=NULL;
+	std::string ip;
+	for (ifa = ifaddrs_; ifa != NULL; ifa = ifa->ifa_next)
+	{			
+		switch(ifa->ifa_addr->sa_family)
+		{
+			case AF_INET:
+				ip = get_ip( ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr );
+				break;
+			case AF_INET6:
+				ip = get_ip( ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr );
+				break;
+			case AF_PACKET:
+				break;
+			default:
+				BOOSTER_LOG(debug,__FUNCTION__) << "unknown sa_family(" << ifa->ifa_addr->sa_family << ")";
+		}
+		if(!ip.empty())
+			ip_.push_back(ip);
+	}
+}
+
+bool if_ip_list::find(const std::string& s)
+{
+	if(s.empty() || !ip_.size())
+		return false;
+	return (std::find(ip_.begin(),ip_.end(),s) != ip_.end());
+}
+
+bool if_ip_list::empty()
+{
+	return ip_.empty();
+}
+
+if_ip_list::~if_ip_list()
+{
+	if (ifaddrs_ != NULL)
+		freeifaddrs(ifaddrs_);
+}
+
+std::string if_ip_list::get_ip(struct in_addr address)
+{
+	char str[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &address, str, INET_ADDRSTRLEN) == NULL)
+	{
+		BOOSTER_LOG(error,__FUNCTION__) << strerror(errno);
+		return "";
+	}
+	return std::string(str);
+}
+
+std::string if_ip_list::get_ip(struct in6_addr address)
+{
+	char str[INET6_ADDRSTRLEN];
+	if (inet_ntop(AF_INET6, &address, str, INET6_ADDRSTRLEN) == NULL)
+	{
+		BOOSTER_LOG(error,__FUNCTION__) << strerror(errno);
+		return "";
+	}
+	return std::string(str);
+}
+
 //Checks if ip is local
 //TODO: IP should be cached
-bool is_local(const std::string& ip)
+bool is_local(if_ip_list& ip_list, const std::string& ip)
 {
-	BOOSTER_LOG(debug,__FUNCTION__) << "IP=" << ip;
+	BOOSTER_LOG(debug,__FUNCTION__) << "ip(" << ip << ")";
 
 	//std::string ip = get_ip(req);
-	if (!ip.empty() && is_ip(ip)) {
-		//check ip on interfaces
-		struct ifaddrs *ifAddrStruct=NULL;
-		struct ifaddrs *ifa=NULL;
-		void *tmpAddrPtr=NULL;
+	if ( ip.empty() || !is_ip(ip) || ip_list.empty() )
+		return false;
 
-		if (getifaddrs(&ifAddrStruct) == -1) {
-			perror("getifaddrs");
-			exit(EXIT_FAILURE);
-		}
-
-		for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
-			if (ifa ->ifa_addr->sa_family==AF_INET) { // check it is IP4
-				tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-				char addressBuffer[INET_ADDRSTRLEN];
-				inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-				//ifa->ifa_name - eth0/lo, addressBuffer - IP
-				if (ip.compare(0,ip.size(),addressBuffer) == 0) {
-					if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-					return true;
-				}
-			}
-			else if (ifa->ifa_addr->sa_family==AF_INET6) { // check it is IP6
-				tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-				char addressBuffer[INET6_ADDRSTRLEN];
-				inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-				//ifa->ifa_name - eth0/lo, addressBuffer - IP
-				if (ip.compare(0,ip.size(),addressBuffer) == 0) {
-					if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-					return true;
-				}
-			}
-		}
-		if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-	}
-	return false;
+	return ip_list.find(ip);
 }
 
 // Checks if request is local by extracted ip
-bool is_local(cppcms::http::request &req)
+bool is_local(if_ip_list& ip_list, cppcms::http::request &req)
 {
 	std::string ip = tools::get_ip(req);//TEST: =  request_.remote_addr();
 
-	if (tools::is_local(ip))
+	if (tools::is_local(ip_list, ip))
 		//if IP is local - just get username from config
 		//this->username_ = username();
 		return true;
@@ -899,13 +952,15 @@ bool is_local(cppcms::http::request &req)
 std::string get_directmail(const std::string& mail)
 {
 	BOOSTER_LOG(debug,__FUNCTION__) << "mail(" << mail <<")";
+	if(mail.empty())
+		return "";
+
 	std::vector<std::string> v;
 	tools::split(mail,"@",v);
 
-	//TODO: should also check local IP
-	if(v[1].find("local") != std::string::npos)
-		return v[1]+":25";
-	
+	if(!v.size() || v[1].empty())
+		return "";
+
 	for(int i = 0; i < TOOLS_DIRECT_NUM; i++)
 	{
 		if(tools::direct_smtp[i][0] == v[1])
@@ -919,26 +974,37 @@ bool send_email(const std::string& user, const std::string& password, const std:
 	BOOSTER_LOG(debug,__FUNCTION__) << "user(" << user << "), mail(" << mail << "), subj(" << subj << "), msg(" << msg << ")";
 
 	std::string host = get_hostname();
-	std::string mailhost;
+	std::string mailhost = "localhost:25";
 
 	if(host.empty()) {
 		host = "localhost";
-		mailhost = "localhost:25";
 	}
 	
-	if(direct)
-		mailhost = get_directmail(mail);
-
+	if(direct) {
+		std::string m = get_directmail(mail);
+		if(!m.empty())
+			mailhost = m;
+	}
 	BOOSTER_LOG(debug,__FUNCTION__) << "host(" << host << "), mailhost(" << mailhost << ")";
-	if(!ESMTP::open(mailhost, user, password))
+	if(!ESMTP::open(mailhost, user, password)) {
+		ESMTP::close();
 		return false;
-
-	std::vector<std::string> r;
-	r.push_back(mail);
-
-	if(!ESMTP::send(std::string("opncms@")+host, mail, r, subj, msg))
-		return false;
+	}
 	
+	try
+	{
+		std::vector<std::string> r;
+		r.push_back(mail);
+
+		if(!ESMTP::send(std::string("opncms@")+host, mail, r, subj, msg)) {
+			ESMTP::close();
+			return false;
+		}
+	}
+	catch(std::exception& e)
+	{
+		BOOSTER_LOG(error,__FUNCTION__) << e.what();
+	}
 	ESMTP::close();
 	return true;
 }

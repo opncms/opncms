@@ -579,7 +579,7 @@ void Auth::do_auth()
 	else if ( utype == UNAUTHED || !utype )
 	{
 		std::string ip = tools::get_ip(app_.request());//TEST: = request_.remote_addr();
-		if (tools::is_local(ip)) {
+		if (tools::is_local(ip_list_, ip)) {
 			//TODO: if IP is local - get id from the config
 			Auth::id("local");
 			Auth::user_type(LOCAL);

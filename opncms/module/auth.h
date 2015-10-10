@@ -340,6 +340,7 @@ private:
 
 	cppcms::application& app_;
 	AuthData data_;
+	tools::if_ip_list ip_list_; //to check ip of local interfaces
 
 	///
 	/// \brief Performs authentication

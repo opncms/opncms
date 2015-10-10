@@ -289,7 +289,6 @@ namespace data
 
 /* FILE functions */
 time_t get_mtime(const std::string& /*filename*/);
-bool set_mtime(const std::string& /*filename*/, time_t /*newtime*/);
 
 /* HASH functions */
 std::string to_str(unsigned char */*ptr*/, size_t /*n*/);
@@ -297,6 +296,7 @@ std::string string_hash(const std::string& /*s*/, const std::string& /*htype*/);
 std::string stream_hash(std::istream &/*is*/, const std::string& /*htype*/);
 std::string file_hash(const std::string& /*file*/, const std::string& /*htype*/);
 std::string magnet(const std::string& /*str*/, const std::string& /*tag*/);
+void init_random();
 unsigned long get_random();
 std::string get_random(size_t /*size*/);
 
@@ -309,12 +309,28 @@ inline unsigned long long rdtsc(){
 */
 
 /* IP functions */
+class if_ip_list
+{
+public:
+	if_ip_list();
+	void init();
+	bool find(const std::string& s);
+	bool empty();
+	~if_ip_list();
+private:
+	std::string get_ip(struct in_addr address);
+	std::string get_ip(struct in6_addr address);
+
+	struct ifaddrs *ifaddrs_;
+	std::vector<std::string> ip_;
+};
+
 std::string get_hostname();
 bool getfullbyname(vec_str &/*hlist*/);
 std::string get_ip(cppcms::http::request &/*req*/);
 bool is_ip(const std::string& ip);
-bool is_local(const std::string& /*ip*/);
-bool is_local(cppcms::http::request &/*req*/);
+bool is_local(if_ip_list& /*ip_list*/, const std::string& /*ip*/);
+bool is_local(if_ip_list& /*ip_list*/, cppcms::http::request &/*req*/);
 std::string get_directmail(const std::string& /*mail*/);
 bool send_email(const std::string& /*user*/, const std::string& /*password*/, const std::string& /*mail*/, const std::string& /*subj*/, const std::string& /*msg*/, bool /*direct*/);
 
