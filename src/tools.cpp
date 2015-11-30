@@ -864,7 +864,10 @@ void if_ip_list::init()
 	struct ifaddrs *ifa=NULL;
 	std::string ip;
 	for (ifa = ifaddrs_; ifa != NULL; ifa = ifa->ifa_next)
-	{			
+	{
+		if(ifa->ifa_addr == NULL)
+			continue;
+
 		switch(ifa->ifa_addr->sa_family)
 		{
 			case AF_INET:
