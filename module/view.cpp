@@ -126,13 +126,15 @@ namespace json {
 
 View::View(cppcms::application& app, cppcms::service& srv)
 : app_(app),
-service_(srv)
+service_(srv),
+menu_max_(0)
 {
 	BOOSTER_LOG(debug, __FUNCTION__);
 	cookie_prefix_=app_.settings().get("session.cookies.prefix","cppcms_session")+"_";
 	media_=app_.settings().get<std::string>("opncms.media");
 
 // init menu
+/*
 	cppcms::json::object a = app_.settings().get<cppcms::json::object>("opncms.view.links");
 	for(cppcms::json::object::iterator it = a.begin(); it != a.end(); ++it) {
 		if (it->first.str().empty())
@@ -141,7 +143,7 @@ service_(srv)
 		//BOOSTER_LOG(debug, __FUNCTION__) << "DBG: list[" << it->first.str() << "]=" << it->second.str();
 	}
 	menu_ = app_.settings().get<cppcms::json::object>("opncms.view.menu");
-
+*/
 	init_lang();
 	BOOSTER_LOG(debug, __FUNCTION__) << "Init complete successfuly";
 	alert("","",false,false);
@@ -167,18 +169,62 @@ void View::init(content::base &c)
 	c.locale = locale_name_;
 
 	c.authed = ioc::get<Auth>().auth();
-	if (!c.authed) {
-		c.cur_user = c.username = "anonymous";
-		fill_menu("header", c.menu_header);
-		fill_menu("sidebar", c.menu_sidebar);
-		fill_menu("userbar", c.menu_userbar);
-	} else {
-		c.cur_user = c.username = ioc::get<Auth>().id(); //username() need to call first - for init other variables
-		fill_menu("header_auth", c.menu_header);
-		fill_menu("sidebar_auth", c.menu_sidebar);
-		fill_menu("userbar_auth", c.menu_userbar);
-	}
 
+	if (c.authed)
+		c.cur_user = c.username = ioc::get<Auth>().id();
+	else
+		c.cur_user = c.username = "anonymous";
+
+	if(menu_.empty())
+	{
+		BOOSTER_LOG(debug, __FUNCTION__) << "init menu from storage";
+		cppcms::json::value pages;
+		if(ioc::get<Data>().driver().get(pages,"pages"))
+		{
+			page_t page_tmp;
+			std::map<int, std::pair<std::string,std::string> > menu_tmp;
+	
+			//collect menu from pages
+			for(cppcms::json::object::iterator it = pages.object().begin(); it != pages.object().end(); ++it)
+			{
+				page_tmp = it->second.get_value<page_t>();
+				page_tmp.id = tools::str2num<int>(it->first.str());
+				pages_.push_back(page_tmp);
+				menu_tmp[page_tmp.order_id] = std::make_pair<std::string,std::string>(page_tmp.name,page_tmp.url);
+				menu_max_ = (page_tmp.order_id>menu_max_)?page_tmp.order_id:menu_max_;
+				
+				if(page_tmp.menu & MENU_HEADER)
+					menu_["header"] = menu_tmp;
+				if(page_tmp.menu & MENU_SIDEBAR)
+					menu_["sidebar"] = menu_tmp;
+				if(page_tmp.menu & MENU_USERBAR)
+					menu_["userbar"] = menu_tmp;
+					
+				menu_tmp.clear();
+			}
+		} else {
+			BOOSTER_LOG(debug, __FUNCTION__) << "pages storage not exists";
+		}
+	}
+	
+	
+	if(!menu_.empty())
+	{
+		std::map<int, std::pair<std::string, std::string > >::iterator it = menu_["header"].begin();
+		for(; it != menu_["header"].end(); ++it)
+			c.menu_header.push_back(it->second);
+		it = menu_["sidebar"].begin();
+		for(; it != menu_["sidebar"].end(); ++it)
+			c.menu_sidebar.push_back(it->second);
+		it = menu_["userbar"].begin();
+		for(; it != menu_["userbar"].end(); ++it)
+			c.menu_userbar.push_back(it->second);
+	}
+/*
+	c.menu_header = menu_[MENU_HEADER];
+	c.menu_sidebar = menu_[MENU_SIDEBAR];
+	c.menu_userbar = menu_[MENU_USERBAR];
+*/	
 	c.local = ioc::get<Auth>().local();
 
 //TODO: it should be cashed
@@ -214,6 +260,7 @@ void View::init(content::base &c)
 	c.alert_text = alert_text;
 	c.alert_type = alert_type;
 	c.alert_dismiss = alert_dismiss;
+	app_.context().locale(locale_name_);
 }
 
 std::string View::brand()
@@ -270,13 +317,10 @@ void View::init_lang()
 	for(cppcms::json::array::const_iterator it=langs.begin(); it!=langs.end(); ++it)
 	{
 		std::string ll,lname;
-		BOOSTER_LOG(debug,__FUNCTION__) << "language[" << it->str() << "]";
-
 		// Translate as the target language
 		// gettext("LANG")="localized language name"
 		l = service_.generator().generate(it->str());
 		ll = std::use_facet<booster::locale::info>(l).language();
-		
 		if (ll=="en")
 			lname = "English";
 		else
@@ -285,8 +329,9 @@ void View::init_lang()
 			if(lname=="LANG")
 				lname=ll;
 		}
-		BOOSTER_LOG(debug,__FUNCTION__) << "language2[" << lname << "]";
-		languages[lname] = ll;
+		BOOSTER_LOG(debug,__FUNCTION__) << "language config(" << it->str() << "), full(" << ll << ")" << ", name(" <<  lname << ")";
+		//languages[lname] = ll;
+		languages[lname] = it->str();
 	}
 
 	// init locale_name_
@@ -295,9 +340,20 @@ void View::init_lang()
 		locale_name_ = p->second;
 		BOOSTER_LOG(debug,__FUNCTION__) << "languages is not empty, locale_name=" << locale_name_;
 	} else {
-		locale_name_ = "en"; //any other default language? )
+		locale_name_ = "en_US.UTF-8"; //any other default language? )
 		BOOSTER_LOG(debug,__FUNCTION__) << "languages is empty, locale_name=" << locale_name_;
 	}
+}
+
+void View::locale(std::string const& lang)
+{
+	locale_name_ = lang;
+	app_.context().locale(lang);
+}
+
+std::string View::locale()
+{
+	return locale_name_;
 }
 
 void View::load_form(content::base& c __attribute__((unused)))
@@ -313,72 +369,13 @@ void View::load_form(content::base& c __attribute__((unused)))
 
 bool View::load(content::base &c)
 {
-/*
 	//Reserved for future use
-	BOOSTER_LOG(debug,__FUNCTION__) << "username=" << ioc::get<Auth>().id() << ", authed=" << (ioc::get<Auth>().auth()?"1":"0");
+	BOOSTER_LOG(debug,__FUNCTION__);
+	//BOOSTER_LOG(debug,__FUNCTION__) << "username=" << ioc::get<Auth>().id() << ", authed=" << (ioc::get<Auth>().auth()?"1":"0");
 	//load_form(c);
 
-	//get user data
-	if (ioc::get<Auth>().auth()) {
-		if (ioc::get<Auth>().type() == "data") {
-			BOOSTER_LOG(debug,__FUNCTION__) << "fetch user data";
-		}
-	}
-*/
+	//load headers
 	return true;
-}
-
-void View::fill_menu(const std::string& menu, tools::vec_map& dst_menu)
-{
-	BOOSTER_LOG(debug,__FUNCTION__) << "Menu: " << menu;
-
-	cppcms::json::array a = menu_.get<cppcms::json::array>(menu,cppcms::json::array());
-
-	if (a.empty()) {
-		BOOSTER_LOG(error,__FUNCTION__) << "Menu " << menu << " is empty";
-		return;
-	}
-
-	cppcms::json::array::const_iterator it = a.begin();
-	for(;it!=a.end();++it) {
-		//if we have just semicolon - just push it and continue
-		if ((((it->is_undefined()) || it->is_null()) || it->str().empty() )) {
-			BOOSTER_LOG(error,__FUNCTION__) << "Menu element is empty, please check your application config for values at 'menu' section";
-			continue;
-		}
-		if (it->str() == "|") {
-			dst_menu.push_back(std::pair<std::string,std::string>("|","")); //TODO: we just ignore anything in config after "|"
-			continue;
-		}
-		//if we have another word - look for it in links and push it
-		tools::map_str::const_iterator its = links_.find(it->str());
-		
-		if (its != links_.end()) {
-			dst_menu.push_back(std::pair<std::string,std::string>(its->first,its->second));
-		} else {
-			BOOSTER_LOG(error,__FUNCTION__) << "Correspondent menu element '" << *it << "' is absent in links, please check your application config for 'links' values";
-		}
-	}
-}
-
-void View::link_add(std::string name,std::string url)
-{
-	links_[name] = url;
-}
-
-void View::menu_add(const std::string& menu, std::string name, size_t pos)
-{
-	//compensation of pos to array range
-	size_t len = menu_[menu].array().size();
-	if (pos >= len)
-		menu_[menu].array().push_back(name);
-	else
-		menu_[menu].array().insert(menu_[menu].array().begin()+pos,name);
-}
-
-void View::menu_add(const std::string& menu, std::string name)
-{
-	menu_[menu].array().push_back(name);
 }
 
 void View::post(content::base &c)
@@ -394,4 +391,14 @@ void View::alert(std::string const& text, std::string const& type, bool enabled,
 	alert_type = type;
 	alert_enabled = enabled;
 	alert_dismiss = dismiss;
+}
+
+void View::menu_add(const std::string& menu, const std::string& name, const std::string& url)
+{
+	menu_[menu][menu_max_++] = std::make_pair<std::string, std::string>(name, url);
+}
+
+void View::menu_add(const std::string& menu, const std::string& name, const std::string& url, int order_id )
+{
+	menu_[menu][order_id] = std::make_pair<std::string, std::string>(name, url);
 }

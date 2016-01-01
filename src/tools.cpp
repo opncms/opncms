@@ -293,17 +293,8 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 		{
 			// Adding Array
 			case cppcms::json::is_array: {
-				// Array -> Array
-				if(vv.type() == cppcms::json::is_array)
-				{
-					//std::cerr << "Value at key is array[" << tools::json_to_string(v.at(key)) << "]";
-					BOOSTER_LOG(debug,__FUNCTION__) << "Value at key is array[" << tools::json_to_string(v.at(key)) << "]";
-					cppcms::json::array& t = v.at(key).array();
-					t.push_back(value);
-				}
-				// Array -> Object, Value -> Object (replace)
-				else
-					v.at(key,value);
+				// Array -> Array (replace)
+				v.at(key,value);
 				break;
 			}
 			// Adding Object
@@ -867,7 +858,7 @@ void if_ip_list::init()
 	{
 		if(ifa->ifa_addr == NULL)
 			continue;
-
+		
 		switch(ifa->ifa_addr->sa_family)
 		{
 			case AF_INET:

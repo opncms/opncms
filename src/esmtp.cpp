@@ -310,20 +310,9 @@ void event_cb(smtp_session_t session arg_unused, int event_no, void *arg,...)
 		case SMTP_EV_STARTTLS_OK:
 			BOOSTER_LOG(debug,__FUNCTION__) << "SMTP_EV_STARTTLS_OK - TLS started here.";
 			break;
-		case SMTP_EV_INVALID_PEER_CERTIFICATE: {
-			long cert_result;
-			cert_result = va_arg(alist, long); ok = va_arg(alist, int*);
-			*ok = handle_invalid_peer_certificate(cert_result);
-			break;
-		}
 		case SMTP_EV_NO_PEER_CERTIFICATE: {
 			ok = va_arg(alist, int*); 
 			BOOSTER_LOG(debug,__FUNCTION__) << "SMTP_EV_NO_PEER_CERTIFICATE. Accepted.";
-			*ok = 1; break;
-		}
-		case SMTP_EV_WRONG_PEER_CERTIFICATE: {
-			ok = va_arg(alist, int*);
-			BOOSTER_LOG(debug,__FUNCTION__) << "SMTP_EV_WRONG_PEER_CERTIFICATE. Accepted.";
 			*ok = 1; break;
 		}
 		case SMTP_EV_NO_CLIENT_CERTIFICATE: {

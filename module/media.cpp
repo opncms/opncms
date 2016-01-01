@@ -46,9 +46,8 @@ bool Media::file_save(const std::string& name, const std::string& data)
 		path = path_+SLH+"users"+SLH+username+SLH+"image";
 
 	std::ofstream ofs((path+SLH+name).c_str(), std::ios::binary);
-
 	std::string base64_data = base64_decode(data);
-		ofs.write(base64_data.data(),base64_data.size());
+	ofs.write(base64_data.data(),base64_data.size());
 
 	ofs.close();
 	if(!ofs)

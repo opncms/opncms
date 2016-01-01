@@ -9,6 +9,71 @@
 
 #include <opncms/module/data.h>
 
+#ifdef _OPNCMS_CPPCMS_OLD
+data_cache::data_cache(cppcms::application& app)
+:app_(app),enabled_(true)
+{}
+void data_cache::rise(std::string const &trigger) {
+	if(enabled_)
+		app_.cache().rise(trigger);
+}
+void data_cache::add_trigger(std::string const &trigger) {
+	if(enabled_)
+		app_.cache().add_trigger(trigger);
+}
+void data_cache::clear() {
+	if(enabled_)
+		app_.cache().clear();
+}
+bool data_cache::stats(unsigned &keys,unsigned &triggers) {
+	if(enabled_)
+		return app_.cache().stats(keys, triggers);
+	return false;
+}
+bool data_cache::has_cache() {
+	if(enabled_)
+		return app_.cache().has_cache();
+	return false;
+}
+bool data_cache::nocache() {
+	if(enabled_)
+		return app_.cache().nocache();
+	return false;
+}
+bool data_cache::fetch_page(std::string const &key) {
+	if(enabled_)
+		return app_.cache().fetch_page(key);
+	return false;
+}
+void data_cache::store_page(std::string const &key,int timeout){
+	if(enabled_)
+		app_.cache().store_page(key, timeout);
+}
+bool data_cache::fetch_frame(std::string const &key,std::string &result, bool notriggers) {
+	if(enabled_)
+		return app_.cache().fetch_frame(key, result, notriggers);
+	return false;
+}
+void data_cache::store_frame(std::string const &key,
+							std::string const &frame,
+							std::set<std::string> const &triggers,
+							int timeout,
+							bool notriggers) {
+	if(enabled_)
+		app_.cache().store_frame(key, frame, triggers, timeout, notriggers);
+}
+void data_cache::store_frame(std::string const &key,
+							std::string const &frame,
+							int timeout,
+							bool notriggers) {
+	if(enabled_)
+		app_.cache().store_frame(key, frame, timeout, notriggers);
+}
+void data_cache::enable() { data_cache::enabled_ = true; }
+void data_cache::disable() { data_cache::enabled_ = false; }
+bool data_cache::enabled() { return data_cache::enabled_; }
+
+#endif
 // ----------------------------------------- Data -----------------------------------------
 //
 // default:
@@ -18,10 +83,13 @@
 //	sql.driver = "sqlite3"
 
 Data::Data(cppcms::application& app)
-:app_(app), dsql_(), dfile_(), dmongodb_()
+#ifdef _OPNCMS_CPPCMS_OLD
+:app_(app), dsql_(), dfile_(), dmongodb_(), cache_(app)
+#else
+:app_(app), dsql_(), dfile_(), dmongodb_(), cache_()
+#endif
 {
 	BOOSTER_LOG(debug,__FUNCTION__);
-//	Data::driver("sql", dsql_);
 	Data::driver("sqlite3", dsql_);
 	Data::driver("postgresql", dsql_);
 	Data::driver("odbc", dsql_);
@@ -112,11 +180,19 @@ const cppcms::json::value& Data::settings()
 	return Data::app_.settings();//return settings_;
 }
 
-cppcms::cache_interface& Data::cache()
+bool Data::is_sql()
 {
-	return Data::app_.cache();
+	return driver().is_sql();
 }
 
+#ifdef _OPNCMS_CPPCMS_OLD
+data_cache& Data::cache()
+#else
+cppcms::cache_interface& Data::cache()
+#endif
+{
+	return Data::cache_;
+}
 cppcms::session_interface& Data::session()
 {
 	return Data::app_.session();

@@ -19,6 +19,7 @@ public:
 	DataSql();
 	bool init(const std::string& /*driver*/, tools::map_str& /*params*/);
 	cppdb::session session();
+	bool is_sql();
 	bool exists(const std::string& /*storage*/);
 	bool exists(const std::string& /*storage*/, const std::string& /*key*/);
 	bool create(const std::string& /*storage*/);
@@ -37,6 +38,7 @@ private:
 	void set_cache(const std::string& /*storage*/, const std::string& /*key*/, const cppcms::json::value& /*value*/, bool is_second=false);
 	bool get_dotted(const std::string& /*key*/, std::string& /*first*/, std::string& /*second*/);
 	cppdb::connection_info conn_;
+	bool storage_changed_;
 };
 
 #endif

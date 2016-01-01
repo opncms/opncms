@@ -17,7 +17,7 @@
 #include <cppcms/http_file.h>
 #include <cppcms/http_context.h>
 #include <cppcms/session_interface.h>
-
+#include <boost/assign/list_of.hpp>
 
 ///
 /// \cond internal
@@ -43,13 +43,10 @@ class rpc : public cppcms::rpc::json_rpc_server
 public:
 	rpc(cppcms::service &, cppcms::application &);
 
-	void list();
+	void methods();
 	void upload(std::string);
-	void msg_load();
-	void msg_users();
-	void msg_send(std::string /*time*/, std::string /*dst*/, std::string /*msg*/);
-	void msg_get(std::string);
 	void rss();
+	void set_locale(std::string);
 protected:
 	cppcms::application& app_;
 	cppcms::json::array methods_;

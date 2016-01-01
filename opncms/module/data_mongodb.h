@@ -26,8 +26,8 @@
 #pragma GCC diagnostic pop
 
 //NOTE: The scope of BSONElement based on its BSONObj
-namespace cppcms {  
-namespace json {  
+namespace cppcms {
+namespace json {
 	template<>
 	struct traits<mongo::BSONObj> {
 
@@ -150,7 +150,7 @@ public:
 	DataMongodb();
 	~DataMongodb();
 	bool init(const std::string& /*driver*/, tools::map_str& /*params*/);
-
+	bool is_sql();
 	bool exists(const std::string& /*storage*/);
 	bool exists(const std::string& /*storage*/, const std::string& /*key*/);
 	int count(const std::string& /*storage*/, const std::string& /*key*/);

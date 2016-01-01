@@ -24,9 +24,7 @@ std::map< std::string, void* > ioc::iocmap_;
 
 //We should hold the plugins' pointers till the end 
 //of application lifetime regarding the cppcms::application
-typedef std::pair<Plugin*,PluginRpc*> pltp;
-typedef std::map< std::string, pltp > plt;
-static plt plugins_pointers;
+static Plug::plt plugins_pointers;
 static Plug pb_("plugins.js", plugins_pointers);
 
 namespace content {
@@ -35,6 +33,10 @@ namespace content {
 
 namespace apps {
 
+/*
+WARN: aware of using context (cache,session,locale,etc.) here.
+		It is not exists yet.
+*/
 site::site(cppcms::service& srv, int argc, char** argv)
 :
 	cppcms::application(srv),
@@ -46,10 +48,10 @@ site::site(cppcms::service& srv, int argc, char** argv)
 	db_(*this),
 	ab_(*this),
 	mb_(*this),
-	vb_(*this, srv)
+	vb_(*this, srv),
+	first_request_(true)
 {
 	BOOSTER_LOG(debug, __FUNCTION__);
-	std::cerr << "srv=" << (&srv) << "db_=" << (&db_) << std::endl;
 	ioc::add<Data>(db_);
 	ioc::add<Auth>(ab_);
 	ioc::add<Media>(mb_);
@@ -79,7 +81,7 @@ site::site(cppcms::service& srv, int argc, char** argv)
 
 //-------------------- URL HANDLERS -------------------------------------------
 
-	BOOSTER_LOG(debug, __FUNCTION__) << "Dispatching application methods";
+	BOOSTER_LOG(debug, __FUNCTION__) << "Attaching application's handlers";
 
 	dispatcher().assign("/", &site::display,this,0);
 	mapper().assign("/");
@@ -89,9 +91,48 @@ site::site(cppcms::service& srv, int argc, char** argv)
 
 	mapper().root("");
 
+//-------------------- PAGES HANDLERS -------------------------------------------
+
+	//Context is not exists yet, so we should disable cache for storage requests
+	//for old library
+#ifdef _OPNCMS_CPPCMS_OLD
+	db_.cache().disable();
+#endif
+	BOOSTER_LOG(debug, __FUNCTION__) << "Attaching pages' handlers";
+	cppcms::json::value v;
+	if(ioc::get<Data>().driver().get(v, "pages"))
+	{
+		if(v.is_undefined() || v.is_null())
+			BOOSTER_LOG(debug, __FUNCTION__) << "There is no data for pages";
+		else
+		{
+			BOOSTER_LOG(debug, __FUNCTION__) << "Proceed with pages"; // v = "id" : {...}
+			std::string page_name, page_url;
+			int page_type;
+			cppcms::json::object::const_iterator it = v.object().begin();
+			for(; it != v.object().end(); ++it )
+			{
+				page_name = it->second.get<std::string>("name");
+				page_url = it->second.get<std::string>("url");
+				page_type = it->second.get<int>("type");
+				BOOSTER_LOG(debug, __FUNCTION__) << "name(" << page_name << "), url(" << page_url << "), type(" << page_type << ")";
+				if(!page_url.empty() && !page_name.empty())
+				{
+					//we should render depending on page type
+					dispatcher().assign(page_url, &site::display,this,0);
+					mapper().assign(page_name,page_url);
+				}
+			}
+		}
+	}
+	else
+		BOOSTER_LOG(debug, __FUNCTION__) << "Can't find pages in storage";
+#ifdef _OPNCMS_CPPCMS_OLD
+	db_.cache().enable();
+#endif
 //-------------------- RPC HANDLERS -------------------------------------------
 
-	BOOSTER_LOG(debug, __FUNCTION__) << "Attaching default rpc handlers";
+	BOOSTER_LOG(debug, __FUNCTION__) << "Attaching application's rpc handlers";
 
 	attach( &*rpc_,
 		"rpc",
@@ -163,43 +204,43 @@ void site::attach_plugin(T plug, tools::vec_str &m)
 
 void site::attach_plugins(Plug& pb)
 {
-		Plug::iterator p;
+	Plug::iterator p;
 
-		BOOSTER_LOG(debug, __FUNCTION__);
+	BOOSTER_LOG(debug, __FUNCTION__);
 
-		for(p = pb.begin(); p!=pb.end(); p++)
-		{
-			std::string path = "plugins." + p->first + ".url";
-			std::string path_rpc = "plugins." + p->first + ".rpc";
+	for(p = pb.begin(); p!=pb.end(); p++)
+	{
+		std::string path = "plugins." + p->first + ".url";
+		std::string path_rpc = "plugins." + p->first + ".rpc";
 
-			tools::vec_str m, mr;
+		tools::vec_str m, mr;
 
-			pb.attach_params(p->first, path, m, 0);
-			pb.attach_params(p->first, path_rpc, mr, 1);
+		pb.attach_params(p->first, path, m, 0);
+		pb.attach_params(p->first, path_rpc, mr, 1);
 
-			BOOSTER_LOG(debug, __FUNCTION__) << "Params for URL: name=" << m[0] << ", var1=" << m[1] << ", var2=" << m[2] << ", var3=" << m[3];
-			BOOSTER_LOG(debug, __FUNCTION__) << "Params for RPC: name=" << mr[0] << ", var1=" << mr[1] << ", var2=" << mr[2] << ", var3=" << mr[3];
+		BOOSTER_LOG(debug, __FUNCTION__) << "Params for URL: name=" << m[0] << ", var1=" << m[1] << ", var2=" << m[2] << ", var3=" << m[3];
+		BOOSTER_LOG(debug, __FUNCTION__) << "Params for RPC: name=" << mr[0] << ", var1=" << mr[1] << ", var2=" << mr[2] << ", var3=" << mr[3];
 
-			Plugin* tmp = pb.get(p->first);
-			PluginRpc* tmp_rpc = pb.get_rpc(p->first);
+		Plugin* tmp = pb.get(p->first);
+		PluginRpc* tmp_rpc = pb.get_rpc(p->first);
 
-			BOOSTER_LOG(debug, __FUNCTION__) << "Plugin " << p->first << " pointers: URL=" << tmp << ", RPC=" << tmp_rpc;
+		BOOSTER_LOG(debug, __FUNCTION__) << "Plugin " << p->first << " pointers: URL=" << tmp << ", RPC=" << tmp_rpc;
 
-			//init plugin content
-			tmp->prepare();
+		//init plugin content
+		tmp->prepare();
 
-			attach_plugin<Plugin*>(tmp,m);
-			attach_plugin<PluginRpc*>(tmp_rpc,mr);
+		attach_plugin<Plugin*>(tmp,m);
+		attach_plugin<PluginRpc*>(tmp_rpc,mr);
 
-			m.clear();
-			mr.clear();
-		}
+		m.clear();
+		mr.clear();
 	}
+}
 
-#ifdef _OPNCMS_DEBUG_
-
+#ifdef _DEB_ENV
 void site::main(std::string url)
 {
+
 /*
 	std::map<std::string,std::string> env=request().getenv();
 	std::map<std::string,std::string>::const_iterator i;
@@ -210,7 +251,6 @@ void site::main(std::string url)
 	BOOSTER_LOG(debug,__FUNCTION__) << "SCRIPT_NAME=" << request().script_name();
 	BOOSTER_LOG(debug,__FUNCTION__) << "QUERY_STRING=" << request().query_string();
 }
-
 #endif
 
 site::~site()

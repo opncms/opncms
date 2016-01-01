@@ -12,6 +12,7 @@
 
 /* we assume the first key as id column */
 DataSql::DataSql()
+:storage_changed_(false)
 {
 	BOOSTER_LOG(debug,__FUNCTION__);
 }
@@ -36,6 +37,11 @@ bool DataSql::init(const std::string& driver, tools::map_str &params)
 	}
 	BOOSTER_LOG(debug,__FUNCTION__) << "connection_string(" << conn << ")";
 	conn_.connection_string = conn;
+	return true;
+}
+
+bool DataSql::is_sql()
+{
 	return true;
 }
 
@@ -90,7 +96,7 @@ bool DataSql::exists(const std::string& storage)
 	catch(std::exception const& e)
 	{
 		BOOSTER_LOG(error,__FUNCTION__) << e.what();
-		return -1;
+		return false;
 	}
 	BOOSTER_LOG(debug,__FUNCTION__) << "table has " << cnt << " rows";
 	return (cnt>=0);
@@ -160,13 +166,16 @@ bool DataSql::get(cppcms::json::value& v, const std::string& storage, const std:
 	std::string k = ks + ":" + key;
 	BOOSTER_LOG(debug,__FUNCTION__) << "cache key(" << k << ")";
 
-	if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
+	if(!storage_changed_)
 	{
-		v = tools::string_to_json(cache_data);
-		return true;
+		if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
+		{
+			v = tools::string_to_json(cache_data);
+			return true;
+		}
+		BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
 	}
-	BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
-
+	
 	try
 	{
 		std::stringstream ss;
@@ -199,6 +208,7 @@ bool DataSql::get(cppcms::json::value& v, const std::string& storage, const std:
 			{
 				ioc::get<Data>().cache().store_frame(k, s, OPNCMS_DATA_CACHE_TIMEOUT);
 				ioc::get<Data>().cache().rise(ks);
+				storage_changed_ = false;
 				return true;
 			}
 			BOOSTER_LOG(debug,__FUNCTION__) << "key is in dot-notation, get nested part at key(" << key_second << ")";
@@ -209,6 +219,8 @@ bool DataSql::get(cppcms::json::value& v, const std::string& storage, const std:
 			s = tools::json_to_string( v );
 			BOOSTER_LOG(debug,__FUNCTION__) << "get value at extended key(" << key_second << ")(" << s << ")";
 			ioc::get<Data>().cache().store_frame(k, s, OPNCMS_DATA_CACHE_TIMEOUT);
+			storage_changed_ = false;
+
 			return true;
 		}
 		while(r.next());
@@ -242,11 +254,13 @@ std::string DataSql::get(const std::string& storage, const std::string& key)
 	std::string k = ks + ":" + key;
 	BOOSTER_LOG(debug,__FUNCTION__) << "cache key(" << k << ")";
 
-	if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
-		return cache_data;
-
-	BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
-
+	if(!storage_changed_)
+	{
+		if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
+			return cache_data;
+		BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
+	}
+	
 	try
 	{
 		std::stringstream ss;
@@ -270,12 +284,14 @@ std::string DataSql::get(const std::string& storage, const std::string& key)
 				BOOSTER_LOG(debug,__FUNCTION__) << "storage(" << storage << ") at key(" << key_first << ") is empty";
 				ioc::get<Data>().cache().store_frame(k,std::string(""),OPNCMS_DATA_CACHE_TIMEOUT);
 				ioc::get<Data>().cache().rise(ks); //clear storage
+				storage_changed_ = false;
 				return "";
 			}
 			if(!dotted)
 			{
 				ioc::get<Data>().cache().store_frame(k, s, OPNCMS_DATA_CACHE_TIMEOUT);
 				ioc::get<Data>().cache().rise(ks);
+				storage_changed_ = false;
 				return s;
 			}
 			BOOSTER_LOG(debug,__FUNCTION__) << "key is in dot-notation, get nested part at key(" << key_second << ")";
@@ -288,6 +304,7 @@ std::string DataSql::get(const std::string& storage, const std::string& key)
 			{
 				BOOSTER_LOG(debug,__FUNCTION__) << "value at extended key(" << key_second << ")(" << s << ")";
 				ioc::get<Data>().cache().store_frame(k, s, OPNCMS_DATA_CACHE_TIMEOUT);
+				storage_changed_ = false;
 				return s;
 			}
 		}
@@ -310,15 +327,21 @@ bool DataSql::get(cppcms::json::value &v, const std::string& storage)
 	if( storage.empty() )
 		return false;
 	
+	if(!DataSql::exists(storage))
+		return false;
+
 	std::string k = std::string("data:sql:") + ioc::get<Data>().driver_name() + ":" + storage;
 	
-	if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
+	if(!storage_changed_)
 	{
-		v = tools::string_to_json(cache_data);
-		return true;
+		if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
+		{
+			v = tools::string_to_json(cache_data);
+			return true;
+		}
+		BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
 	}
-	BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
-
+	
 	try
 	{
 		std::stringstream ss;
@@ -341,6 +364,7 @@ bool DataSql::get(cppcms::json::value &v, const std::string& storage)
 			BOOSTER_LOG(debug,__FUNCTION__) << "Warning: there are more than one row for key";
 
 		ioc::get<Data>().cache().store_frame(k,r_value,OPNCMS_DATA_CACHE_TIMEOUT);
+		storage_changed_ = false;
 		
 		v = tools::string_to_json(r_value);
 		return (v.is_null() || v.is_undefined())?false:true;
@@ -364,10 +388,12 @@ std::string DataSql::get(const std::string& storage)
 	
 	std::string k = std::string("data:sql:") + ioc::get<Data>().driver_name() + ":" + storage;
 	
-	if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
-		return cache_data;
-
-	BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
+	if(!storage_changed_)
+	{
+		if(ioc::get<Data>().cache().fetch_frame(k,cache_data))
+			return cache_data;
+		BOOSTER_LOG(debug,__FUNCTION__) << "cache miss for key(" << k << ")";
+	}
 
 	try
 	{
@@ -377,20 +403,25 @@ std::string DataSql::get(const std::string& storage)
 		cppdb::statement st = DataSql::session() << ss.str();
 		cppdb::result r = st.row();
 
-		if (r.empty()) {
-			BOOSTER_LOG(debug,__FUNCTION__) << "value is empty or not exists";
-			return "";
-		}
-		r >> r_key >> r_data;
+		v = std::string("{");
+		do
+		{
+			if (r.empty()) {
+				BOOSTER_LOG(debug,__FUNCTION__) << "value is empty or not exists";
+				return "";
+			}
+			
+			r >> r_key >> r_data;
 		
-		v = std::string("{\"") + r_key + "\":" + r_data + "}";
+			v += std::string("\"") + r_key + "\":" + r_data + ",";
+		}
+		while(r.next());
+		v = v.substr(0, v.size()-1);
+		v += std::string("}");
 		BOOSTER_LOG(debug,__FUNCTION__) << "value(" << v << ")";
 
-		r.next();
-		if(!r.empty())
-			BOOSTER_LOG(debug,__FUNCTION__) << "Warning: there are more than one row for key";
-
 		ioc::get<Data>().cache().store_frame(k,v,OPNCMS_DATA_CACHE_TIMEOUT);
+		storage_changed_ = false;
 		return ((tools::trim(v) == "null")?"":v);
 	}
 	catch(std::exception const& e)
@@ -421,7 +452,7 @@ bool DataSql::set(const std::string& storage, cppcms::json::value& value)
 		std::string k = std::string("data:sql:") + ioc::get<Data>().driver_name() + ":" + storage + ":" + it_first;
 		BOOSTER_LOG(debug,__FUNCTION__) << "key(" << k << ")";
 
-		if( ioc::get<Data>().cache().fetch_frame(k,cache_data) )
+		if( !storage_changed_ && ioc::get<Data>().cache().fetch_frame(k,cache_data) )
 		{
 			BOOSTER_LOG(debug,__FUNCTION__) << "cached data: (" << cache_data << ")";
 			if(cache_data.empty() || cache_data=="")
@@ -440,7 +471,7 @@ bool DataSql::set(const std::string& storage, cppcms::json::value& value)
 				ss << std::string("UPDATE ") << storage << " SET data=? WHERE key=?;";
 			}
 		}
-
+		
 		try {
 			cppdb::statement st = DataSql::session() << ss.str();
 			st.bind(1, it_second);
@@ -454,6 +485,7 @@ bool DataSql::set(const std::string& storage, cppcms::json::value& value)
 			return false;
 		}
 		ioc::get<Data>().cache().store_frame(ks, tools::json_to_string(value), OPNCMS_DATA_CACHE_TIMEOUT);
+		storage_changed_ = true;
 	}
 	return true;
 }
@@ -480,7 +512,7 @@ bool DataSql::set(const std::string& storage, const std::string& key, cppcms::js
 	std::stringstream ss;
 
 	//check full key
-	if( ioc::get<Data>().cache().fetch_frame(k,cache_data) && !cache_data.empty() )
+	if( !storage_changed_ && ioc::get<Data>().cache().fetch_frame(k,cache_data) && !cache_data.empty() )
 	{
 		BOOSTER_LOG(debug,__FUNCTION__) << "cached data: (" << cache_data << ")";
 		v = tools::string_to_json(cache_data);
@@ -541,6 +573,7 @@ bool DataSql::set(const std::string& storage, const std::string& key, cppcms::js
 		BOOSTER_LOG(error,__FUNCTION__) << e.what();
 		return false;
 	}
+	storage_changed_ = true;
 	return true;
 }
 
@@ -567,29 +600,41 @@ bool DataSql::erase(const std::string& storage, const std::string& key)
 	if(v.is_undefined() || v.is_null())
 		return false; //we even can't get the value at root key
 
-	if(dotted)
-		tools::json_erase(key_second, v);
-	else
-		tools::json_erase("", v);
-
-	std::string newdata_first = tools::json_to_string(v);
-
 	std::stringstream ss;
-	ss << std::string("UPDATE ") << storage << " SET data=? WHERE key=?;";
+
+	if(dotted)
+	{
+		tools::json_erase(key_second, v);
+		ss << std::string("UPDATE ") << storage << " SET data=? WHERE key=?;";
+	}
+	else
+	{
+		//tools::json_erase("", v);
+		ss << std::string("DELETE FROM ") << storage << " WHERE key=?;";		
+	}
+	std::string newdata_first = tools::json_to_string(v);
 
 	try {
 		cppdb::statement st = DataSql::session() << ss.str();
 		BOOSTER_LOG(debug,__FUNCTION__) << "actual value(" << newdata_first << ")";
-		st.bind(1, newdata_first );
-		st.bind(2, key_first );
-		st.exec();
-
-		DataSql::set_cache(storage,key,v,true); //NOTE: the value at key is exists and empty
+		if(dotted) {
+			st.bind(1, newdata_first );
+			st.bind(2, key_first );
+		} else {
+			st.bind(1, key_first );
+		}
+		st.exec();		
 	}
 	catch(std::exception const& e) {
 		BOOSTER_LOG(error,__FUNCTION__) << e.what();
 		return false;
 	}
+	
+	if(dotted)
+		DataSql::set_cache(storage,key,v,true); //NOTE: the value at key is exists and empty
+	else
+		ioc::get<Data>().cache().rise(std::string("data:sql:") + ioc::get<Data>().driver_name() + ":" + storage + ":" + key);
+	storage_changed_ = true;
 	return true;
 }
 

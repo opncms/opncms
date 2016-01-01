@@ -22,6 +22,63 @@
 #include <cppcms/json.h>
 #include <opncms/tools.h>
 
+#ifdef _OPNCMS_CPPCMS_OLD
+class data_cache {
+public:
+	data_cache(cppcms::application& /*app_*/);
+	void rise(std::string const &/*trigger*/);
+	void add_trigger(std::string const &/*trigger*/);
+	void clear();
+	bool stats(unsigned &/*keys*/,unsigned &/*triggers*/);
+	bool has_cache();
+	bool nocache();
+	bool fetch_page(std::string const &/*key*/);
+	void store_page(std::string const &/*key*/,int /*timeout=-1*/);
+	bool fetch_frame(std::string const &/*key*/,std::string &/*result*/,bool notriggers=false);
+	void store_frame(std::string const &/*key*/,
+                                 std::string const &/*frame*/,
+                                 std::set<std::string> const &triggers=std::set<std::string>(),
+                                 int timeout=-1,
+                                 bool notriggers=false);
+	void store_frame(std::string const &/*key*/,
+                                 std::string const &/*frame*/,
+                                 int /*timeout*/,
+                                 bool notriggers=false);
+	template<typename Serializable>
+	bool fetch_data(std::string const &key,Serializable &data,bool notriggers=false)
+	{
+		if(enabled_)
+			return app_.cache().fetch_data<Serializable>(key, data, notriggers);
+		return false;
+	}
+
+	template<typename Serializable>
+	void store_data(std::string const &key,Serializable const &data,
+				std::set<std::string> const &triggers=std::set<std::string>(),
+				int timeout=-1,bool notriggers=false)
+	{
+	if(enabled_)
+		app_.cache().store_data<Serializable>(key, data, triggers, timeout, notriggers);
+	}
+
+	template<typename Serializable>
+	void store_data(std::string const &key,Serializable const &data,int timeout, bool notriggers=false)
+	{
+		if(enabled_)
+			app_.cache().store_data<Serializable>(key, data, timeout, notriggers);
+	}
+
+	void enable();
+	void disable();
+	bool enabled();
+
+private:
+	cppcms::application& app_;
+	bool enabled_;
+};
+
+#endif
+
 ///
 /// \class IData data.h opncms/module/data.h
 /// Interface for various implementations of Data Manager
@@ -35,6 +92,10 @@ public:
 	/// \param driver driver name (sqlite,mysql,etc..)
 	/// \param params params map for driver
 	virtual bool init(const std::string& /*driver*/, tools::map_str& /*params*/) = 0;
+	///
+	/// \brief Checks the driver is sql supported
+	///	
+	virtual bool is_sql() = 0;
 	///
 	/// \brief Checks the storage existance
 	/// \param storage name table or path to file with data
@@ -182,7 +243,12 @@ public:
 	///
 	const std::string& path();
 	const cppcms::json::value& settings();
+	bool is_sql();
+#ifdef _OPNCMS_CPPCMS_OLD
+	data_cache& cache();
+#else
 	cppcms::cache_interface& cache();
+#endif
 	cppcms::session_interface& session();
 	cppcms::http::request& request();
 
@@ -195,6 +261,12 @@ private:
 	DataSql dsql_;
 	DataFile dfile_;
 	DataMongodb dmongodb_;
+
+#ifdef _OPNCMS_CPPCMS_OLD
+	data_cache cache_;
+#else
+	cppcms::cache_interface cache_;
+#endif
 };
 
 #endif

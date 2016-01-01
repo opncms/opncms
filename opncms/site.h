@@ -46,11 +46,9 @@ public:
 	site(cppcms::service &, int, char**);
 	~site();
 	void display(std::string upath="home");
-
 #ifdef _DEB_ENV
-	virtual void main(std::string /*url*/);
+	virtual void main(std::string url);
 #endif
-
 private:
 	int argc_;
 	char** argv_;
@@ -65,6 +63,7 @@ private:
 	View vb_;
 
 	std::string upath;
+	bool first_request_;
 
 	template <typename T>
 	void attach_plugin(T, tools::vec_str &);

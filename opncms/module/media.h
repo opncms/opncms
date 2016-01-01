@@ -54,8 +54,8 @@ public:
 	///
 	void file_save(const std::string& /*name*/, booster::shared_ptr<cppcms::http::file> /*data*/);
 private:
-        cppcms::application& app_;
-        std::string path_;
+	cppcms::application& app_;
+	std::string path_;
 	std::string upload_;
 };
 

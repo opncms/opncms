@@ -50,6 +50,11 @@ bool DataMongodb::init(const std::string& driver, tools::map_str &params)
 	return true;
 }
 
+bool DataMongodb::is_sql()
+{
+	return false;
+}
+
 bool DataMongodb::exists(const std::string& storage)
 {
 	BOOSTER_LOG(debug,__FUNCTION__) << "storage(" << storage << ")";

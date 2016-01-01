@@ -101,11 +101,11 @@ struct err_policy
 //Plugins container
 class Plug : public err_policy
 {
+public:
 	//type for plugins: name => (Plugin*,PluginRpc*)
 	typedef std::pair<Plugin*,PluginRpc*> pltp;
 	typedef std::map< std::string, pltp > plt;
 
-public:
 	typedef plt::const_iterator const_iterator;
 	typedef plt::iterator iterator;
 	typedef plt::reverse_iterator reverse_iterator;
@@ -118,7 +118,7 @@ public:
 	const_iterator begin() const { return pl_.begin(); }
 	const_iterator end() const { return pl_.end(); }
 
-	bool empty() const { return pl_.begin() == pl_.end(); }
+	bool empty() const { return pl_.empty(); }
 	size_t count ( const std::string& _s ) const {return pl_.count(_s);}
 	size_t size () const {return pl_.size();}
 
@@ -238,6 +238,7 @@ public:
 		
 		for(plt::const_iterator it = pl_.begin(); it != pl_.end(); it++)
 		{
+			//WARN: what if second.first is undefined?
 			if(it->second.first->is_css())
 				pos_["css"]++;
 			if(it->second.first->is_js_head())
@@ -355,7 +356,6 @@ public:
 			BOOSTER_LOG(error, __FUNCTION__) << "Can`t get path " << path << " in config " << conf;
 			return false;
 		}
-
 		root_ = path;
 
 		if(!load_plugins(obj))
@@ -364,7 +364,6 @@ public:
 			return false;
 		}
 		prepare_pos();
-		tools::vec_str().swap(obj); //clear vector
 		return true;
 	}
 	//TODO: reload plugin & all plugins
@@ -497,20 +496,6 @@ public:
 	}
 
 private:
-	time_t get_mtime(std::string const &file_name)
-	{
-#ifdef OPNCMS_WIN_NATIVE
-		struct _stat st;
-		if( _wstat(booster::nowide::convert(file_name).c_str(), &st) < 0 )
-			return 0;
-#else
-		struct stat st;
-		if( stat(file_name.c_str(), &st ) < 0 )
-			return 0;
-#endif
-		return st.st_mtime;
-	}
-
 	booster::shared_object plugin_holder;
 
 	cppcms::json::value config_;

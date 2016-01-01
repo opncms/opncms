@@ -26,6 +26,11 @@ bool DataFile::init(const std::string& driver, tools::map_str &params)
 	return true;
 }
 
+bool DataFile::is_sql()
+{
+	return false;
+}
+
 bool DataFile::exists(const std::string& storage)
 {
 	BOOSTER_LOG(debug,__FUNCTION__) << "storage(" << storage << ")";
