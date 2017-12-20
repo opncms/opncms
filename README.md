@@ -1,5 +1,7 @@
 # opnCMS
 
+[![Join the chat at https://gitter.im/opncms/opncms](https://badges.gitter.im/opncms/opncms.svg)](https://gitter.im/opncms/opncms?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 opnCMS is an simple environment based on [CppCMS web-framework](http://cppcms.com) for building high-performance modern web applications.
 
 ##Features
