@@ -23,7 +23,7 @@
 
 #include <opncms/module/data.h>
 #include <opncms/bcrypt.h>
-#include <format.h>
+#include <fmt/format.h>
 
 #define MAX_LOGIN_ATTEMPTS 5
 #define SEED_DEFAULT 1024
