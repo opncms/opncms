@@ -60,7 +60,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 # against the conflict with unistd.h crypt declaration
 if (CMAKE_COMPILER_IS_GNUCXX)
-  set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -pedantic -pg -D__SKIP_GNU" )
+  set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU" )
 #  set ( CMAKE_CXX_FLAGS_DEBUG "")
 #  set ( CMAKE_CXX_FLAGS_RELEASE  "" )
 endif ()
@@ -193,8 +193,8 @@ add_custom_target(
 set(BCRYPT_SHARED ${BCRYPT_INC}/libbcrypt.so)
 set(BCRYPT_STATIC ${BCRYPT_INC}/libbcrypt.a)
 
-set(FMTLIB_SHARED ${FMTLIB_INC}/libfmt.so)
-set(FMTLIB_STATIC ${FMTLIB_INC}/libfmt.a)
+set(FMTLIB_SHARED ${FMTLIB_INC}/fmt/libfmt.so)
+set(FMTLIB_STATIC ${FMTLIB_INC}/fmt/libfmt.a)
 
 if(USE_STATIC_VIEW)
 	add_executable(opncms ${SRC} ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp)
