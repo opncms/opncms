@@ -8,6 +8,7 @@ find_package(Doxygen)
 
 option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 option(MONGODB_ORIGINAL "Use installed mongodb library" OFF)
+option(CPPCMS_OLD "Use CppCMS 1.x earlier then 1.1.0" OFF)
 option(USE_STATIC_VIEW "Compile view statically into opnpcms" OFF)
 
 if(BUILD_DOCUMENTATION)
@@ -60,9 +61,13 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 # against the conflict with unistd.h crypt declaration
 if (CMAKE_COMPILER_IS_GNUCXX)
-  set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU" )
-#  set ( CMAKE_CXX_FLAGS_DEBUG "")
-#  set ( CMAKE_CXX_FLAGS_RELEASE  "" )
+  if(CPPCMS_OLD)
+    set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU -D_OPNCMS_CPPCMS_OLD" )
+  else()
+    set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU" )
+#    set ( CMAKE_CXX_FLAGS_DEBUG "")
+#    set ( CMAKE_CXX_FLAGS_RELEASE  "" )
+  endif ()
 endif ()
 
 set (MONGODB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mongo-cxx-driver)
