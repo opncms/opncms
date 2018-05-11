@@ -26,28 +26,6 @@
 #define _(X) ::cppcms::locale::translate(X)
 #define N_(S,P,N)  ::cppcms::locale::translate(S,P,N)
 
-//Bitmask can represents page in several menu
-enum menu_mask
-{
-		MENU_HEADER		= 1,
-		MENU_SIDEBAR	= 2,
-		MENU_USERBAR	= 4
-};
-
-struct page_t
-{
-        int id;
-        int order_id;
-        std::string name;
-        std::string icon;
-        std::string url;
-        std::string type;
-        bool authed;
-        bool active;
-        int menu;
-        cppcms::json::value data;
-};
-
 namespace cppcms {  
 namespace json {  
 	template<>
