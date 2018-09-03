@@ -39,7 +39,7 @@ std::string bcrypt_hash(const std::string& key,const std::string& salt)
 	void* data = NULL;
 	int size;
 	
-	if(key.empty() || salt.empty())
+	if(key.empty() && salt.empty())
 		return "";
 	
 	BOOSTER_LOG(debug,__FUNCTION__) << "generate hash";

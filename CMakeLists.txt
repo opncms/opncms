@@ -296,7 +296,7 @@ add_test(test_base64 test_base64)
 
 add_executable(test_esmtp ${TESTDIR}/test_esmtp.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/esmtp.cpp)
 target_link_libraries(test_esmtp ${ESMTP} ${BOOSTER})
-add_test(test_esmtp test_esmtp)
+add_test(test_esmtp test_esmtp test test@localhost)
 
 add_executable(test_bcrypt ${TESTDIR}/test_bcrypt.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/bcrypt.cpp)
 target_link_libraries(test_bcrypt ${BOOSTER} ${BCRYPT_STATIC})

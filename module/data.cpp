@@ -86,7 +86,7 @@ Data::Data(cppcms::application& app)
 #ifdef _OPNCMS_CPPCMS_OLD
 :app_(app), dsql_(), dfile_(), dmongodb_(), cache_(app)
 #else
-:app_(app), dsql_(), dfile_(), dmongodb_(), cache_(app.context())
+:app_(app), dsql_(), dfile_(), dmongodb_(), cache_(app.service())
 #endif
 {
 	BOOSTER_LOG(debug,__FUNCTION__);

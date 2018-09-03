@@ -293,8 +293,16 @@ void json_set(cppcms::json::value& v, const std::string& key, cppcms::json::valu
 		{
 			// Adding Array
 			case cppcms::json::is_array: {
-				// Array -> Array (replace)
-				v.at(key,value);
+				if(vv.type() == cppcms::json::is_array) {
+					// Array -> Array (add)
+                                        cppcms::json::array& t = v.at(key).array();
+					t.push_back(value);
+				}
+				else {
+				
+					// Array -> Array (replace)
+					v.at(key,value);
+				}
 				break;
 			}
 			// Adding Object
