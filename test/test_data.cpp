@@ -9,6 +9,7 @@
 
 #include <sys/mman.h>
 #include <sys/file.h>
+#include <sys/wait.h>
  
 #include <cppcms/service.h>
 #include <cppcms/applications_pool.h>
@@ -345,7 +346,7 @@ int main()
 				exit(0);
 			default:
 				app.run();
-				wait();
+				wait(NULL);
 		}
 		//app.shutdown();
 	}
