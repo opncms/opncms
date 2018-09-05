@@ -16,6 +16,7 @@
 #include <stdarg.h>
 #include <iostream>
 #include <vector>
+#include <string.h>
 
 #include <openssl/ssl.h>
 #include <auth-client.h>

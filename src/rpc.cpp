@@ -24,8 +24,11 @@ app_(app)
 	bind("upload",cppcms::rpc::json_method(&rpc::upload,this),method_role);
 	bind("rss",cppcms::rpc::json_method(&rpc::rss,this),method_role);
 	bind("set_locale",cppcms::rpc::json_method(&rpc::set_locale,this),method_role);
-
+#if __cplusplus>=201103L
+	methods_ = {"system.listMethods", "upload", "rss", "set_locale"};
+#else
 	methods_ = boost::assign::list_of ("system.listMethods")("upload")("rss")("set_locale");
+#endif
 	BOOST_ASSERT( methods_.size() == 4 );
 }
 

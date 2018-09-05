@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
+#include <sys/wait.h>
 #include <booster/log.h>
 #include <cppcms/service.h>
 #include <cppcms/applications_pool.h>
@@ -197,7 +198,7 @@ int main()
 				exit(0);
 			default:
 				app.run();
-				wait();
+				wait(NULL);
 		}
 		//app.shutdown();
 	}

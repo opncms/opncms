@@ -59,15 +59,26 @@ if(NOT CMAKE_BUILD_TYPE)
 	      FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-# against the conflict with unistd.h crypt declaration
 if (CMAKE_COMPILER_IS_GNUCXX)
-  if(CPPCMS_OLD)
-    set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU -D_OPNCMS_CPPCMS_OLD" )
+  #use __SKIP_GNU for the crypt declaration's conflict in unistd.h
+  set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU" )
+
+  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+  if (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
+    message(STATUS "C++11 activated")
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11" )
+    set ( MONGODB_FLAGS "--c++11=on" )
+  elseif(GCC_VERSION VERSION_GREATER 4.3 OR GCC_VERSION VERSION_EQUAL 4.3)
+    message(WARNING "C++0x activated")
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x" )
   else()
-    set ( CMAKE_CXX_FLAGS "-Wall -Wno-long-long -ldl -pedantic -pg -D__SKIP_GNU" )
-#    set ( CMAKE_CXX_FLAGS_DEBUG "")
-#    set ( CMAKE_CXX_FLAGS_RELEASE  "" )
+    message(WARNING "C++98 activated")
+  endif()
+
+  if(CPPCMS_OLD)
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_OPNCMS_CPPCMS_OLD" )
   endif ()
+
 endif ()
 
 set (MONGODB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mongo-cxx-driver)
@@ -184,7 +195,7 @@ add_custom_target(
 
 add_custom_target(
 	libmongoclient
-	COMMAND scons install --prefix=${MONGODB_SRC}/build/install #--sharedclient
+	COMMAND scons install --prefix=${MONGODB_SRC}/build/install ${MONGODB_FLAGS} #--sharedclient
 	WORKING_DIRECTORY ${MONGODB_SRC}
 )
 
