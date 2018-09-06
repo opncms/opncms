@@ -16,7 +16,11 @@
 #pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#if __cplusplus>=201103L
+#pragma GCC diagnostic ignored "-Wpedantic"
+#else
 #pragma GCC diagnostic ignored "-pedantic"
+#endif
 #include "mongo/client/dbclient.h"
 #include "mongo/db/json.h"
 #include "mongo/bson/bsonobj.h"
