@@ -17,7 +17,10 @@
 #include <cppcms/http_file.h>
 #include <cppcms/http_context.h>
 #include <cppcms/session_interface.h>
+
+#if !(__cplusplus>=201103L)
 #include <boost/assign/list_of.hpp>
+#endif
 
 ///
 /// \cond internal

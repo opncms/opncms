@@ -28,8 +28,8 @@ app_(app)
 	methods_ = {"system.listMethods", "upload", "rss", "set_locale"};
 #else
 	methods_ = boost::assign::list_of ("system.listMethods")("upload")("rss")("set_locale");
-#endif
 	BOOST_ASSERT( methods_.size() == 4 );
+#endif
 }
 
 void rpc::methods()
