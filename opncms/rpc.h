@@ -46,6 +46,7 @@ class rpc : public cppcms::rpc::json_rpc_server
 public:
 	rpc(cppcms::service &, cppcms::application &);
 
+	void health();
 	void methods();
 	void upload(std::string);
 	void rss();
