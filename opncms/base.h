@@ -85,6 +85,7 @@ struct base : public cppcms::base_content {
 
 	std::string name, title, content, sidebar;
 
+	page_t page;
 	menu_t menu_header;
 	menu_t menu_sidebar;
 	menu_t menu_userbar;

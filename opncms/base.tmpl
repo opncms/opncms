@@ -151,6 +151,7 @@
 
 <% template js_foot() %>
 <script src="<%= media %>/js/bootstrap.min.js"></script>
+<script src="<%= media %>/js/opncms.js"></script>
 <script type="text/javascript">
 $(function() {
   // Setup drop down menu
@@ -170,14 +171,14 @@ $('#button_id').click(function(){
 
 <% template lang() %>
 	<% foreach r rowid idx in languages %>
-		<% item %><a id="hdrm_<%= r.second %>" linkindex="<%= idx %>" href="/<%= r.second %>"><%= r.first %></a>
-		<% end %><% empty %><a id="hdrm_last" linkindex="100"<!-- loop.index --> href=""></a>
+		<% item %><a linkindex="<%= idx %>" onclick="opncms.set_locale('<%= r.second %>');" href="#"><%= r.first %></a>
+		<% end %><% empty %><a id="hdrm_last" linkindex="100" href="#"><!-- use loop.index for linkindex --></a>
 	<% end %>
 <% end template %>
 
 <% template footer() %>
 	<div class="lang"><% include lang() %></div>
-	<% if not empty copyright %><%= copyright %><% else %><div id="copyright">Powered by opnCMS &copy; 2010-2015</div><% end %>
+	<% if not empty copyright %><%= copyright %><% else %><div id="copyright">Powered by opnCMS &copy; 2010-2019</div><% end %>
 <% end template %>
 
 <% template header() %>
@@ -197,6 +198,7 @@ $('#button_id').click(function(){
 
 <% template body() %>
 <body>
+<div id="wrapper">
    <nav class="navbar <% if navbar_inverse %>navbar-inverse<% else %>navbar-default<% end %> navbar-fixed-top" role="navigation">
     <div class="<% if container_fluid %>container-fluid<% else %>container<% end %>">
       <div class="navbar-header">
@@ -210,6 +212,9 @@ $('#button_id').click(function(){
       </div><!-- navbar-header -->
       <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav navbar-right">
+<% foreach m in menu_header %>
+<% item %><li><a href="<%= m.second %>" class="navbar-link"><%= m.first %></a></li><% end %>
+<% end %>
 <% if authed %>
           <li><a href="/u/profile" class="navbar-link"><%= username %></a></li>
 <% end %>
@@ -222,11 +227,10 @@ $('#button_id').click(function(){
       </div><!--collapse -->
     </div><!-- container -->
   </nav>
-
-    <div class="container-fluid">
+    <div id="page-content" class="container-fluid">
       <div class="row">
           <% include plugin_left() %>
-        <div class="span9" <% if not is_left %>style="width:100%;"<% end %>>
+        <div class="span9">
 		<% include alerts() %>
 
           <div class="plugins-top">
@@ -250,15 +254,11 @@ $('#button_id').click(function(){
       </div><!--/row-->
 
       <hr>
-
-      <footer>
-        <% include footer() %>
-      </footer>
-
+      <footer><% include footer() %></footer>
     </div><!--container-->
-
     <!-- Placed at the end of the document so the pages load faster -->
     <% include js_foot() %>
+	</div> <!-- wrapper -->
   </body>
 </html>
 <% end template %>
