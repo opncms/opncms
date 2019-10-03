@@ -5,7 +5,8 @@ enable_testing()
 
 option(CPPCMS_OLD "Use CppCMS 1.x earlier then 1.1.0" OFF)
 option(USE_STATIC_VIEW "Compile view statically into opnpcms" OFF)
-option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
+option(USE_TEMPLATE_FRAMEWORK "Compile view using custom HTML/CSS/JS framework" OFF)
+option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" OFF)
 
 # Main
 message(STATUS "System: " ${CMAKE_SYSTEM_NAME} " " ${CMAKE_SYSTEM_VERSION} ", CPU: " ${CMAKE_HOST_SYSTEM_PROCESSOR})
@@ -217,7 +218,26 @@ set(OPNCMS_LIBS ${OPNCMS_LIBS} revisiontag)
 
 #VIEWS
 
-set(TEMPLATES ${CMAKE_CURRENT_SOURCE_DIR}/opncms/base.tmpl)
+set(TEMPLATE_FRAMEWORK "bootstrap" CACHE STRING "Use Bootstrap HTML/CSS/JS framework")
+if(USE_TEMPLATE_FRAMEWORK AND TEMPLATE_FRAMEWORK)
+	message(STATUS "Use custom HTML/CSS/JS framework: ${TEMPLATE_FRAMEWORK}")
+	set(TEMPLATES_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/frameworks)
+	if(NOT EXISTS TEMPLATES_SRC)
+		execute_process(COMMAND git clone https://github.com/opncms/frameworks.git ${TEMPLATES_SRC})
+		if(NOT EXISTS ${TEMPLATES_SRC}/${TEMPLATE_FRAMEWORK})
+			message(STATUS "Can't find ${TEMPLATE_FRAMEWORK}")
+		else()
+			if(EXISTS ${TEMPLATES_SRC}/${TEMPLATE_FRAMEWORK}/base.h)
+				message(STATUS "This framework provide custom View header replaces default one")
+				execute_process(COMMAND cp -i ${TEMPLATES_SRC}/${TEMPLATE_FRAMEWORK}/base.h ${CMAKE_CURRENT_SOURCE_DIR}/opncms/base.h)
+			endif()
+			FILE(GLOB TEMPLATES "${TEMPLATES_SRC}/${TEMPLATE_FRAMEWORK}/*.tmpl")
+			message(STATUS "Found ${TEMPLATE_FRAMEWORK} files: ${TEMPLATES}")
+		endif()
+	endif()
+else()
+	set(TEMPLATES ${CMAKE_CURRENT_SOURCE_DIR}/opncms/base.tmpl)
+endif()
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp
 	COMMAND ${TMPLCC}
