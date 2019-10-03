@@ -569,25 +569,27 @@ void Auth::do_auth()
 {
 	BOOSTER_LOG(debug,__FUNCTION__);
 	std::string uid = Auth::id();
-	int utype = Auth::user_type();
+	int utype = UNAUTHED;
 
 	//check if user saved to session and set authed
 	if (!uid.empty() && ioc::get<Auth>().ref().exists(uid))
 	{
 		BOOSTER_LOG(debug,__FUNCTION__) << "id(" << uid << ") authed";
 	}
-	else if ( utype == UNAUTHED || !utype )
+	else
 	{
 		std::string ip = tools::get_ip(app_.request());//TEST: = request_.remote_addr();
 		if (tools::is_local(ip_list_, ip)) {
 			//TODO: if IP is local - get id from the config
-			Auth::id("local");
-			Auth::user_type(LOCAL);
+			uid = "local";
+			utype = LOCAL;
 		}
 		else {
-			Auth::id(ip);
-			Auth::user_type(UNNAMED);
+			uid = ip;
+			utype = UNNAMED;
 		}
+		Auth::id(uid);
+		Auth::user_type(utype);
 	}
 	BOOSTER_LOG(debug,__FUNCTION__) << "id(" << uid << "), user_type(" << utype << ")";
 }
