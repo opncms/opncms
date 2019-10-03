@@ -3,34 +3,9 @@ project(opncms)
 
 enable_testing()
 
-# add a target to generate API documentation with Doxygen
-find_package(Doxygen)
-
-option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
-option(MONGODB_ORIGINAL "Use installed mongodb library" OFF)
 option(CPPCMS_OLD "Use CppCMS 1.x earlier then 1.1.0" OFF)
 option(USE_STATIC_VIEW "Compile view statically into opnpcms" OFF)
-
-if(BUILD_DOCUMENTATION)
-    if(NOT DOXYGEN_FOUND)
-        message(FATAL_ERROR "Doxygen is needed to build the documentation.")
-    endif()
-
-    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-    set(doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen)
-
-    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
-
-    add_custom_target(doc
-        COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM)
-
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION share/doc)
-endif()
+option(BUILD_DOCUMENTATION "Create and install the HTML based API documentation (requires Doxygen)" ${DOXYGEN_FOUND})
 
 # Main
 message(STATUS "System: " ${CMAKE_SYSTEM_NAME} " " ${CMAKE_SYSTEM_VERSION} ", CPU: " ${CMAKE_HOST_SYSTEM_PROCESSOR})
@@ -47,7 +22,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
     if(MINGW)
         message(STATUS "Compiler: MinGW")
     endif(MINGW)
+
+    if(WIN32)
+        add_definitions(-DDLL_EXPORT)
+    endif()
 else(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/lib/x86_64-linux-gnu)
+    set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /lib /usr/lib /usr/lib64 /usr/local/lib /usr/local/lib64 /usr/lib/x86_64-linux-gnu)
     message(STATUS "Only GCC is supported on Linux")
 endif(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 
@@ -91,58 +72,23 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 
 endif ()
 
-set (MONGODB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mongo-cxx-driver)
-set (BCRYPT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/crypt_blowfish-1.2)
-set (FMTLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/fmt)
-set (CMAKE_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/opncms ${BCRYPT_SRC} ${MONGODB_SRC}/build/install/include ${FMTLIB_SRC})
-
-if (NOT EXISTS ${MONGODB_SRC})
-        execute_process(COMMAND git clone -b "legacy-1.1.3" https://github.com/mongodb/mongo-cxx-driver.git ${MONGODB_SRC})
-endif ()
-
-if (NOT EXISTS ${FMTLIB_SRC})
-        execute_process(COMMAND git clone -b "4.0.0" https://github.com/fmtlib/fmt.git ${FMTLIB_SRC})
-endif ()
-
-if(NOT MONGODB_ORIGINAL)
-	set(MONGODB_SHARED ${MONGODB_SRC}/build/install/lib/libmongoclient.so)
-	set(MONGODB_STATIC ${MONGODB_SRC}/build/install/lib/libmongoclient.a)
-	find_path(MONGODB_INC ${MONGODB_SRC}/build/install/include/mongo/client/dbclient.h)
-	link_directories(${MONGODB_SRC}/build/install/lib)
-	include_directories(${MONGODB_SRC}/build/install/include)
-else()
-	set(MONGODB_SHARED libmongoclient.so)
-	set(MONGODB_STATIC libmongoclient.a)
-	find_path(MONGODB_INC mongo/client/dbclient.h)
-	include_directories(${MONGODB_INC})
-endif()
-
-link_directories(${BCRYPT_INC})
-link_directories(${FMTLIB_SRC})
+# CPPCMS
 
 find_library(CPPCMS cppcms)
 find_library(BOOSTER booster)
 find_library(CPPDB cppdb)
-find_library(MONGODB mongoclient)
-find_library(FMTLIB libfmt)
 find_library(BOOST_SYSTEM boost_system)
 find_library(BOOST_FILESYSTEM boost_filesystem)
-find_library(ESMTP esmtp)
-
 find_library(BOOST_THREAD boost_thread)
 find_library(BOOST_REGEX boost_regex)
 
 find_path(CPPCMS_INC cppcms/application.h)
 find_path(BOOSTER_INC booster/shared_ptr.h)
 find_path(CPPDB_INC cppdb/frontend.h)
-find_path(BCRYPT_INC ow-crypt.h)
-find_path(FMTLIB_INC fmt/format.h)
 
 include_directories(${CPPCMS_INC})
 include_directories(${BOOSTER_INC})
 include_directories(${CPPDB_INC})
-include_directories(${BCRYPT_INC})
-include_directories(${FMTLIB_INC})
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(.)
 
@@ -151,14 +97,95 @@ find_program(XGETTEXT xgettext)
 find_program(MSGFMT msgfmt)
 find_program(MSGMERGE msgmerge)
 
-if(WIN32)
-	add_definitions(-DDLL_EXPORT)
+#LIBCRYPTO
+find_library(CRYPTO_STATIC NAMES libcrypto.a)
+find_library(CRYPTO_SHARED NAMES libcrypto.so)
+#LIBSSL
+find_library(SSL_STATIC NAMES libssl.a)
+find_library(SSL_SHARED NAMES libssl.so)
+#LIBSASL
+find_library(SASL_STATIC NAMES libsasl2.a)
+find_library(SASL_SHARED NAMES libsasl2.so)
+
+# LIBBCRYPT
+
+set(BCRYPT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/crypt_blowfish-1.2)
+include_directories(${BCRYPT_SRC})
+find_path(BCRYPT_INC ow-crypt.h HINTS ${BCRYPT_SRC})
+add_custom_target(
+        libbcrypt
+        COMMAND make library
+	WORKING_DIRECTORY ${BCRYPT_SRC}
+)
+set(BCRYPT_SHARED ${BCRYPT_INC}/libbcrypt.so)
+set(BCRYPT_STATIC ${BCRYPT_INC}/libbcrypt.a)
+set(OPNCMS_LIBS libbcrypt)
+
+#LIBFMT
+
+find_library(FMTLIB fmt)
+if(FMTLIB)
+	find_library(FMTLIB_STATIC NAMES libfmt.a)
+	find_library(FMTLIB_SHARED NAMES libfmt.a)
+	find_path(FMTLIB_INC fmt/format.h)
+	include_directories(${FMTLIB_INC})
+else()
+	message(STATUS "FMTLIB not found. Build from source.")
+	set(FMTLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/fmt)
+	if (NOT EXISTS ${FMTLIB_SRC})
+        	execute_process(COMMAND git clone -b "4.0.0" https://github.com/fmtlib/fmt.git ${FMTLIB_SRC})
+	endif()
+	find_path(FMTLIB_INC fmt/format.h HINTS ${FMTLIB_SRC})
+	include_directories(${FMTLIB_INC})
+	link_directories(${FMTLIB_INC})
+	add_custom_target(
+        	libfmt
+        	COMMAND cmake .
+        	COMMAND make
+        	WORKING_DIRECTORY ${FMTLIB_INC}
+	)
+	set(FMTLIB_SHARED ${FMTLIB_INC}/fmt/libfmt.so)
+	set(FMTLIB_STATIC ${FMTLIB_INC}/fmt/libfmt.a)
+	set(FMTLIB ${FMTLIB_STATIC})
+	set(OPNCMS_LIBS ${OPNCMS_LIBS} libfmt)
 endif()
 
+#MONGODB
 
-set(TEMPLATES
-${CMAKE_CURRENT_SOURCE_DIR}/opncms/base.tmpl
-)
+find_library(MONGODB mongoclient)
+if(MONGODB)
+	find_library(MONGODB_SHARED NAMES libmongoclient.so)
+	find_library(MONGODB_STATIC NAMES libmongoclient.a)
+        find_path(MONGODB_INC mongo/client/dbclient.h)
+        include_directories(${MONGODB_INC})
+        set(CMAKE_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/opncms ${BCRYPT_SRC} ${FMTLIB_SRC})
+else()
+	message(STATUS "MONGODB not found. Build from source.")
+	set(MONGODB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mongo-cxx-driver)
+        if (NOT EXISTS ${MONGODB_SRC})
+                execute_process(COMMAND git clone -b "legacy-1.1.3" https://github.com/mongodb/mongo-cxx-driver.git ${MONGODB_SRC})
+        endif()
+	find_path(MONGODB_INC ${MONGODB_SRC}/build/install/include/mongo/client/dbclient.h)
+	link_directories(${MONGODB_SRC}/build/install/lib)
+	include_directories(${MONGODB_SRC}/build/install/include)
+	set(MONGODB_SHARED ${MONGODB_SRC}/build/install/lib/libmongoclient.so)
+	set(MONGODB_STATIC ${MONGODB_SRC}/build/install/lib/libmongoclient.a)
+	set(MONGODB ${MONGODB_STATIC})
+	set(CMAKE_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/opncms ${BCRYPT_SRC} ${MONGODB_SRC}/build/install/include ${FMTLIB_INC})
+	add_custom_target(
+		libmongoclient
+		COMMAND scons install --prefix=${MONGODB_SRC}/build/install ${MONGODB_FLAGS} #--sharedclient
+		WORKING_DIRECTORY ${MONGODB_SRC}
+	)
+	set(OPNCMS_LIBS ${OPNCMS_LIBS} libmongoclient)
+endif()
+
+# ESMTP
+
+find_library(ESMTP esmtp)
+if(NOT ESMTP)
+	message(STATUS "ESMTP not found")
+endif()
 
 set(SRC main.cpp
 	src/base64.cpp
@@ -176,6 +203,8 @@ set(SRC main.cpp
 	src/rpc.cpp
 )
 
+# REVISIONTAG
+
 # a custom target that is always built
 add_custom_target(revisiontag ALL)
 
@@ -184,10 +213,11 @@ add_custom_command(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
 	-DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} 
 	-P ${CMAKE_CURRENT_SOURCE_DIR}/getversion.cmake)
 
-#configure_file (
-#	"${PROJECT_SOURCE_DIR}/version.h.in"
-#	"${PROJECT_BINARY_DIR}/version.h")
+set(OPNCMS_LIBS ${OPNCMS_LIBS} revisiontag)
 
+#VIEWS
+
+set(TEMPLATES ${CMAKE_CURRENT_SOURCE_DIR}/opncms/base.tmpl)
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp
 	COMMAND ${TMPLCC}
@@ -197,43 +227,15 @@ add_custom_command(
 		${TEMPLATES}
 	DEPENDS ${TEMPLATES})
 
-add_custom_target(
-	libbcrypt
-	COMMAND make library
-	WORKING_DIRECTORY ${BCRYPT_INC}
-)
-
-add_custom_target(
-	libmongoclient
-	COMMAND scons install --prefix=${MONGODB_SRC}/build/install ${MONGODB_FLAGS} #--sharedclient
-	WORKING_DIRECTORY ${MONGODB_SRC}
-)
-
-add_custom_target(
-        libfmt
-        COMMAND cmake .
-        COMMAND make
-        WORKING_DIRECTORY ${FMTLIB_INC}
-)
-
-set(BCRYPT_SHARED ${BCRYPT_INC}/libbcrypt.so)
-set(BCRYPT_STATIC ${BCRYPT_INC}/libbcrypt.a)
-
-set(FMTLIB_SHARED ${FMTLIB_INC}/fmt/libfmt.so)
-set(FMTLIB_STATIC ${FMTLIB_INC}/fmt/libfmt.a)
-
 if(USE_STATIC_VIEW)
-	add_executable(opncms ${SRC} ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp)
+        add_executable(opncms ${SRC} ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp)
 else()
-	add_executable(opncms ${SRC})
-	add_library(opncms_view SHARED ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp)
-	target_link_libraries(opncms_view ${BOOSTER} ${CPPCMS})
-#        target_link_libraries(opncms ${BOOSTER} ${CPPCMS} ${CPPDB} ${BCRYPT_SHARED})
-#        add_dependencies(opncms libbcrypt)
+        add_executable(opncms ${SRC})
+        add_library(opncms_view SHARED ${CMAKE_CURRENT_BINARY_DIR}/opncms_view.cpp)
+        target_link_libraries(opncms_view ${BOOSTER} ${CPPCMS})
 endif()
-
-target_link_libraries(opncms ${BOOSTER} ${CPPCMS} ${CPPDB} ${BCRYPT_STATIC} ${MONGODB_STATIC} ${FMTLIB_STATIC} ${ESMTP} ${BOOST_SYSTEM} ${BOOST_FILESYSTEM} ${BOOST_THREAD} ${BOOST_REGEX})
-add_dependencies(opncms libbcrypt libfmt libmongoclient revisiontag)
+target_link_libraries(opncms ${BOOSTER} ${CPPCMS} ${CPPDB} ${BCRYPT_STATIC} ${FMTLIB} ${MONGODB} ${ESMTP} ${BOOST_SYSTEM} ${BOOST_FILESYSTEM} ${BOOST_THREAD} ${BOOST_REGEX})
+add_dependencies(opncms ${OPNCMS_LIBS})
 
 #  Localization
 set(LOCALES ru)
@@ -297,6 +299,30 @@ foreach(LOCALE ${LOCALES})
         install(FILES ${MOFILE} DESTINATION share/locale/${LOCALE}/LC_MESSAGES/)
 endforeach()
 
+# DOCUMENTATION
+
+if(BUILD_DOCUMENTATION)
+    find_package(Doxygen)
+    if(NOT DOXYGEN_FOUND)
+        message(FATAL_ERROR "Doxygen is needed to build the documentation.")
+    endif()
+
+    set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+    set(doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen)
+
+    configure_file(${doxyfile_in} ${doxyfile} @ONLY)
+
+    add_custom_target(doc
+        COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM)
+
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html DESTINATION share/doc)
+endif()
+
 # Tests
 
 set(BASIC_TESTS
@@ -324,9 +350,11 @@ target_link_libraries(test_bcrypt ${BOOSTER} ${BCRYPT_STATIC})
 add_test(test_bcrypt test_bcrypt)
 
 add_executable(test_data ${TESTDIR}/test_data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/tools.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/esmtp.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data_sql.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data_file.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data_mongodb.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data.cpp)
-target_link_libraries(test_data ${BOOSTER} ${BOOST_SYSTEM} ${BOOST_FILESYSTEM} ${CPPCMS} ${CPPDB} ${ESMTP} ${MONGODB_STATIC} ${FMTLIB_STATIC} ${BOOST_THREAD} ${BOOST_REGEX})
+target_link_libraries(test_data ${BOOSTER} ${BOOST_SYSTEM} ${BOOST_FILESYSTEM} ${CPPCMS} ${CPPDB} ${FMTLIB} ${MONGODB} ${ESMTP} ${BOOST_THREAD} ${BOOST_REGEX})
+add_dependencies(test_data ${OPNCMS_LIBS})
 add_test(test_data test_data)
 
 add_executable(test_auth ${TESTDIR}/test_auth.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/tools.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/esmtp.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/bcrypt.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data_sql.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data_file.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data_mongodb.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/data.cpp ${CMAKE_CURRENT_SOURCE_DIR}/module/auth.cpp)
-target_link_libraries(test_auth ${BOOSTER} ${BOOST_SYSTEM} ${BOOST_FILESYSTEM} ${CPPCMS} ${CPPDB} ${BCRYPT_STATIC} ${FMTLIB_STATIC} ${ESMTP} ${MONGODB_STATIC} ${BOOST_THREAD} ${BOOST_REGEX})
+target_link_libraries(test_auth ${BOOSTER} ${BOOST_SYSTEM} ${BOOST_FILESYSTEM} ${CPPCMS} ${CPPDB} ${BCRYPT_STATIC} ${FMTLIB} ${MONGODB} ${ESMTP} ${BOOST_THREAD} ${BOOST_REGEX})
+add_dependencies(test_auth ${OPNCMS_LIBS})
 add_test(test_auth test_auth)
